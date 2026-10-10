@@ -934,6 +934,10 @@ namespace DWS_Lite
                 // ---- Widgets (News and Interests) ----
                 SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "AllowNewsAndInterests", "0",
                     RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "DisableWidgetsBoard", "0",
+                    RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "DisableWidgetsOnLockScreen", "0",
+                    RegistryValueKind.DWord);
                 _OutPut("Windows 11: Widgets disabled.");
                 // ---- Start menu / Explorer ads & suggestions ----
                 SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
