@@ -1,15 +1,15 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Destroy Windows 10 Spying Rollup Edition")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Destroy Windows 11 Spying")]
+[assembly: AssemblyDescription("Privacy tool for Windows 11 (and Windows 10/8/7)")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("WZT")]
-[assembly: AssemblyProduct("Destroy Windows 10 Spying")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("Destroy Windows 11 Spying")]
+[assembly: AssemblyCopyright("Copyright © 2015 Nummer; fork DWS 11")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -30,5 +30,5 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("1.6.722.0")]
-[assembly: AssemblyFileVersion("1.6.722.0")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.0.0.0")]

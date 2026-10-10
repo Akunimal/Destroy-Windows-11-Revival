@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -155,6 +155,33 @@
   </data>
   <data name="checkBoxSPYTasks" xml:space="preserve">
     <value>Disable SPY tasks</value>
+  </data>
+  <data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+    <value>Delete Copilot, AI Hub and AI Provider</value>
+  </data>
+  <data name="checkBoxDeleteAppTeams" xml:space="preserve">
+    <value>Delete Microsoft Teams</value>
+  </data>
+  <data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+    <value>Delete new Outlook for Windows</value>
+  </data>
+  <data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+    <value>Delete Clipchamp</value>
+  </data>
+  <data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+    <value>Delete Widgets and News feed</value>
+  </data>
+  <data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+    <value>Delete PC Manager, Get Started, Feedback, etc.</value>
+  </data>
+  <data name="checkBoxWin11Tweaks" xml:space="preserve">
+    <value>Windows 11 tweaks: Copilot, Recall, Widgets, ads (registry)</value>
+  </data>
+  <data name="checkBoxDeleteSpyServices" xml:space="preserve">
+    <value>EXPERT: delete telemetry services (not just disable)</value>
+  </data>
+  <data name="checkBoxBlockSpyIPs" xml:space="preserve">
+    <value>EXPERT: block 2015 spy IPs via persistent routes</value>
   </data>
   <data name="Complete" xml:space="preserve">
     <value>Complete</value>

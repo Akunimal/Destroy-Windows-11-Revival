@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -39,6 +39,7 @@ namespace DWS_Lite
         private ResourceManager _rm;
         private string _system32Location;
         private bool _win10 = true;
+        private bool _win11;
 
         public MainDwsForm(string[] args)
         {
@@ -70,40 +71,11 @@ namespace DWS_Lite
             ChangeLanguage(); // change language
             StealthMode(args); //check args
             new Thread(AnimateBackground).Start(); // animate border (new thread)
-            new Thread(AutoUpdate).Start(); // auto update
         }
 
-        void AutoUpdate()
-        {
-            try
-            {
-                var assemblyInfo =
-                    new WebClient().DownloadString(
-                        "http://raw.githubusercontent.com/spinda/Destroy-Windows-10-Spying/master/DWS/Properties/AssemblyInfo.cs");
-                var readText = assemblyInfo.Split('\n');
-                var versionInfoLines = readText.Where(t => t.Contains("[assembly: AssemblyFileVersion"));
-                var version = "";
-                foreach (var item in versionInfoLines)
-                {
-                    version = item.Substring(item.IndexOf('(') + 2, item.LastIndexOf(')') - item.IndexOf('(') - 3);
-                }
-                if (version !=
-                    FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location)
-                        .FileVersion)
-                {
-                    if (MessageBox.Show($"New version avalible.\n\nVersion: {version} .\n\nDownload now?", @"Update",
-                        MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                    {
-                        Process.Start("https://github.com/spinda/Destroy-Windows-10-Spying/releases/latest");
-                        Process.GetCurrentProcess().Kill();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error check update.\nMessage: {ex.Message}", @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+        // Auto-update removed in the DWS 11 fork: the old check downloaded an
+        // AssemblyInfo.cs over plain HTTP from the upstream repo (MITM risk).
+        // Check releases on GitHub manually instead.
 
         public override string Text
         {
@@ -209,7 +181,7 @@ namespace DWS_Lite
         }
 
         /*
-         * Check windows build number (win 10 or 7/8)
+         * Check windows build number: Windows 11 (>= 22000), Windows 10 (>= 10240), or Windows 7/8.1
          */
 
         private void CheckWindowsVersion()
@@ -222,7 +194,13 @@ namespace DWS_Lite
                     MessageBoxIcon.Error) == DialogResult.Yes)
                     Process.GetCurrentProcess().Kill();
             }
-            // check Win 7 or 8.1
+            // Windows 11 is build 22000 and up (21H2+); 24H2/25H2 are 26100+
+            if (windowsBuildNumber >= 22000)
+            {
+                _win11 = true;
+                _OutPut($"Windows 11 detected (build {windowsBuildNumber}).", LogLevel.Info);
+            }
+            // check Win 10/11 vs 7/8.1
             if (windowsBuildNumber >= 10000) return;
             _win10 = false;
             Windows78Panel.Enabled = true;
@@ -466,7 +444,12 @@ namespace DWS_Lite
             Progressbaradd(15); //25
             if (checkBoxAddToHosts.Checked)
             {
-                AddToHostsAndFirewall();
+                AddSpyDomainsToHosts();
+            }
+            // Legacy blackhole routes to 2015 spy IPs - EXPERT MODE ONLY (off by default)
+            if (checkBoxBlockSpyIPs.Checked)
+            {
+                BlockIpAddr();
             }
             Progressbaradd(20); //45
             if (checkBoxDisablePrivateSettings.Checked)
@@ -554,15 +537,19 @@ namespace DWS_Lite
             {
                 try
                 {
-                    SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows Defender", "DisableAntiSpyware", "1",
-                        RegistryValueKind.DWord);
+                    // NOTE: DisableAntiSpyware (used by old DWS) has been IGNORED
+                    // by Windows since 1903 and is flagged by malware scanners.
+                    // We only set MAPS/sample-submission off here. On Windows 11
+                    // Tamper Protection may block even these - enable it off first.
                     SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows Defender\Spynet", "SpyNetReporting", "0",
                         RegistryValueKind.DWord);
                     SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows Defender\Spynet", "SubmitSamplesConsent", "2",
                         RegistryValueKind.DWord);
+                    SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows Defender\Spynet", "MAPSReporting", "0",
+                        RegistryValueKind.DWord);
                     SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\MRT", "DontReportInfectionInformation", "1",
                         RegistryValueKind.DWord);
-                    _OutPut("Disable Windows Defender.");
+                    _OutPut("Disable Defender cloud/MAPS reporting (Tamper Protection may block on Win11).");
                     SetRegValueHklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer", "SmartScreenEnabled", "Off",
                         RegistryValueKind.String);
                     _OutPut("Disable smart screen.");
@@ -578,6 +565,11 @@ namespace DWS_Lite
                 }
             }
             Progressbaradd(5); //60
+            if (checkBoxWin11Tweaks.Checked && _win11)
+            {
+                ApplyWin11Tweaks();
+            }
+            Progressbaradd(5); //65
             if (checkBoxSetDefaultPhoto.Checked)
             {
                 SetRegValueHkcu(@"Software\Classes\.ico", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
@@ -634,11 +626,15 @@ namespace DWS_Lite
             RunCmd("/c sc config WMPNetworkSvc start=disabled ");
             RunCmd(
                 "/c REG ADD HKLM\\SYSTEM\\ControlSet001\\Control\\WMI\\AutoLogger\\AutoLogger-Diagtrack-Listener /v Start /t REG_DWORD /d 0 /f");
-            RunCmd("/c sc delete dmwappushsvc");
-            RunCmd("/c sc delete \"Diagnostics Tracking Service\"");
-            RunCmd("/c sc delete diagtrack");
-            RunCmd("/c reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules\"  /v \"{60E6D465-398E-4850-BE86-7EF7620A2377}\" /t REG_SZ /d  \"v2.24|Action=Block|Active=TRUE|Dir=Out|App=C:\\windows\\system32\\svchost.exe|Svc=DiagTrack|Name=Windows  Telemetry|\" /f");
-            RunCmd("/c reg add \"HKLM\\SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules\"  /v \"{2765E0F4-2918-4A46-B9C9-43CDD8FCBA2B}\" /t REG_SZ /d  \"v2.24|Action=Block|Active=TRUE|Dir=Out|App=C:\\windows\\systemapps\\microsoft.windows.cortana_cw5n1h2txyewy\\searchui.exe|Name=Search  and Cortana  application|AppPkgId=S-1-15-2-1861897761-1695161497-2927542615-642690995-327840285-2659745135-2630312742|\"  /f");
+            // DELETING services (sc delete) is a hard action: Windows 11 re-registers
+            // DiagTrack on update and breakage is possible. Expert mode only.
+            if (checkBoxDeleteSpyServices.Checked)
+            {
+                RunCmd("/c sc delete dmwappushsvc");
+                RunCmd("/c sc delete \"Diagnostics Tracking Service\"");
+                RunCmd("/c sc delete diagtrack");
+                _OutPut("Telemetry services DELETED (expert mode).", LogLevel.Warning);
+            }
             RunCmd(
                 "/c reg add \"HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Device Metadata\" /v \"PreventDeviceMetadataFromNetwork\" /t REG_DWORD /d 1 /f ");
             RunCmd(
@@ -770,152 +766,126 @@ namespace DWS_Lite
             }
         }
 
-        private void AddToHostsAndFirewall()
+        private void AddSpyDomainsToHosts()
         {
             try
             {
+                // Telemetry/ad/tracking endpoints as of 2025 (Windows 11 era).
+                // Removed obsolete 2015 entries, typo duplicates, and domains
+                // that break core connectivity (NCSI, Windows Update, MS account).
                 string[] hostsdomains =
                 {
-                    "a.ads1.msn.com",
-                    "a.ads2.msads.net",
-                    "a.ads2.msn.com",
-                    "a.rad.msn.com",
-                    "a-0001.a-msedge.net",
-                    "a-0002.a-msedge.net",
-                    "a-0003.a-msedge.net",
-                    "a-0004.a-msedge.net",
-                    "a-0005.a-msedge.net",
-                    "a-0006.a-msedge.net",
-                    "a-0007.a-msedge.net",
-                    "a-0008.a-msedge.net",
-                    "a-0009.a-msedge.net",
-                    "ac3.msn.com",
-                    "ad.doubleclick.net",
-                    "adnexus.net",
-                    "adnxs.com",
-                    "ads.msn.com",
-                    "ads1.msads.net",
-                    "ads1.msn.com",
-                    "aidps.atdmt.com",
-                    "aka-cdn-ns.adtech.de",
-                    "a-msedge.net",
-                    "apps.skype.com",
-                    "az361816.vo.msecnd.net",
-                    "az512334.vo.msecnd.net",
-                    "b.ads1.msn.com",
-                    "b.ads2.msads.net",
-                    "b.rad.msn.com",
-                    "bs.serving-sys.com",
-                    "c.atdmt.com",
-                    "c.msn.com",
-                    "ca.telemetry.microsoft.com",
-                    "cache.datamart.windows.com",
-                    "cdn.atdmt.com",
-                    "cds26.ams9.msecn.net",
-                    "choice.microsoft.com",
-                    "choice.microsoft.com.nsatc.net",
-                    "compatexchange.cloudapp.net",
-                    "corp.sts.microsoft.com",
-                    "corpext.msitadfs.glbdns2.microsoft.com",
-                    "cs1.wpc.v0cdn.net",
-                    "db3aqu.atdmt.com",
-                    "db3wns2011111.wns.windows.com",
+                    // Telemetry ingestion (Windows 10/11)
+                    "v10.events.data.microsoft.com",
+                    "v20.events.data.microsoft.com",
+                    "browser.events.data.microsoft.com",
+                    "self.events.data.microsoft.com",
+                    "events.data.microsoft.com",
+                    "functional.events.data.microsoft.com",
+                    "telemetry.microsoft.com",
+                    "watson.telemetry.microsoft.com",
+                    "watson.ppe.telemetry.microsoft.com",
+                    "modern.watson.telemetry.microsoft.com",
                     "df.telemetry.microsoft.com",
-                    "diagnostics.support.microsoft.com",
-                    "ec.atdmt.com",
-                    "fe2.update.microsoft.com.akadns.net",
-                    "fe3.delivery.dsp.mp.microsoft.com.nsatc.net",
+                    "oca.telemetry.microsoft.com",
+                    "sqm.telemetry.microsoft.com",
+                    "sqm.df.telemetry.microsoft.com",
+                    "telecommand.telemetry.microsoft.com",
+                    "telemetry.appex.bing.net",
+                    "telemetry.urs.microsoft.com",
+                    "ca.telemetry.microsoft.com",
+                    "i1.services.social.microsoft.com",
+                    "compatexchange.cloudapp.net",
+                    "settings.data.microsoft.com",
+                    "settings-win.data.microsoft.com",
+                    "settings-sandbox.data.microsoft.com",
+                    "vortex.data.microsoft.com",
+                    "vortex-win.data.microsoft.com",
+                    "vortex-sandbox.data.microsoft.com",
+                    "v10.vortex-win.data.microsoft.com",
+                    "vortex-bn2.metron.live.com.nsatc.net",
+                    "vortex-cy2.metron.live.com.nsatc.net",
+                    "wes.df.telemetry.microsoft.com",
+                    "reports.wes.df.telemetry.microsoft.com",
+                    "services.wes.df.telemetry.microsoft.com",
                     "feedback.microsoft-hohm.com",
                     "feedback.search.microsoft.com",
                     "feedback.windows.com",
+                    "diagnostics.support.microsoft.com",
+                    "pre.footprintpredict.com",
+                    "survey.watson.microsoft.com",
+                    "watson.live.com",
+                    "watson.microsoft.com",
+                    "statsfe1.ws.microsoft.com",
+                    "statsfe2.ws.microsoft.com",
+                    "statsfe2.update.microsoft.com.akadns.net",
+                    "choice.microsoft.com",
+                    "choice.microsoft.com.nsatc.net",
+                    "spynet2.microsoft.com",
+                    "spynetalt.microsoft.com",
+                    "redir.metaservices.microsoft.com",
+                    "ceuswatcab01.blob.core.windows.net",
+                    "ceuswatcab02.blob.core.windows.net",
+                    // Bing advertising / search telemetry
+                    "ads.msn.com",
+                    "ads1.msn.com",
+                    "a.ads1.msn.com",
+                    "b.ads1.msn.com",
+                    "a.ads2.msn.com",
+                    "a.ads2.msads.net",
+                    "b.ads2.msads.net",
+                    "ads1.msads.net",
+                    "a.rad.msn.com",
+                    "b.rad.msn.com",
+                    "rad.msn.com",
+                    "live.rads.msn.com",
+                    "rad.live.com",
                     "flex.msn.com",
                     "g.msn.com",
                     "h1.msn.com",
-                    "i1.services.social.microsoft.com",
-                    "i1.services.social.microsoft.com.nsatc.net",
-                    "lb1.www.ms.akadns.net",
-                    "live.rads.msn.com",
-                    "m.adnxs.com",
-                    "m.hotmail.com",
-                    "msedge.net",
-                    "msftncsi.com",
-                    "msnbot-207-46-194-33.search.msn.com",
-                    "msnbot-65-55-108-23.search.msn.com",
-                    "msntest.serving-sys.com",
-                    "oca.telemetry.microsoft.com",
-                    "oca.telemetry.microsoft.com.nsatc.net",
-                    "pre.footprintpredict.com",
+                    "ac3.msn.com",
                     "preview.msn.com",
-                    "pricelist.skype.com",
-                    "rad.live.com",
-                    "rad.msn.com",
-                    "redir.metaservices.microsoft.com",
-                    "reports.wes.df.telemetry.microsoft.com",
-                    "s.gateway.messenger.live.com",
-                    "s0.2mdn.net",
-                    "schemas.microsoft.akadns.net ",
+                    "c.msn.com",
+                    // Ad networks
+                    "ad.doubleclick.net",
+                    "adnexus.net",
+                    "adnxs.com",
+                    "m.adnxs.com",
                     "secure.adnxs.com",
-                    "secure.flashtalking.com",
-                    "services.wes.df.telemetry.microsoft.com",
-                    "settings.data.microsoft.com",
-                    "settings-sandbox.data.microsoft.com",
-                    "settings-win.data.microsoft.com",
-                    "sls.update.microsoft.com.akadns.net",
-                    "sO.2mdn.net",
-                    "spynet2.microsoft.com",
-                    "spynetalt.microsoft.com",
-                    "sqm.df.telemetry.microsoft.com",
-                    "sqm.telemetry.microsoft.com",
-                    "sqm.telemetry.microsoft.com.nsatc.net",
-                    "ssw.live.com",
+                    "s0.2mdn.net",
                     "static.2mdn.net",
-                    "statsfe1.ws.microsoft.com",
-                    "statsfe2.update.microsoft.com.akadns.net",
-                    "statsfe2.ws.microsoft.com",
-                    "survey.watson.microsoft.com",
-                    "telecommand.telemetry.microsoft.com",
-                    "telecommand.telemetry.microsoft.com.nsatc.net",
-                    "telecommand.telemetry.microsoft.com.nsat­c.net",
-                    "telemetry.appex.bing.net",
-                    "telemetry.appex.bing.net:443",
-                    "telemetry.microsoft.com",
-                    "telemetry.urs.microsoft.com",
-                    "ui.skype.com",
-                    "v10.vortex-win.data.microsoft.com",
+                    "bs.serving-sys.com",
+                    "msntest.serving-sys.com",
+                    "aidps.atdmt.com",
+                    "c.atdmt.com",
+                    "cdn.atdmt.com",
+                    "db3aqu.atdmt.com",
+                    "ec.atdmt.com",
                     "view.atdmt.com",
-                    "vortex.data.microsoft.com",
-                    "vortex-bn2.metron.live.com.nsatc.net",
-                    "vortex-cy2.metron.live.com.nsatc.net",
-                    "vortex-sandbox.data.microsoft.com",
-                    "vortex-win.data.microsoft.com",
-                    "watson.live.com",
-                    "watson.microsoft.com",
-                    "watson.ppe.telemetry.microsoft.com",
-                    "watson.telemetry.microsoft.com",
-                    "watson.telemetry.microsoft.com.nsatc.net",
-                    "wes.df.telemetry.microsoft.com",
-                    "win10.ipv6.microsoft.com",
-                    "www.msftncsi.com",
+                    "aka-cdn-ns.adtech.de",
+                    "secure.flashtalking.com",
+                    // Skype ads
+                    "pricelist.skype.com",
+                    // Misc tracking-adjacent
+                    "ssw.live.com",
+                    "s.gateway.messenger.live.com"
                 };
                 var hostslocation = _system32Location + @"drivers\etc\hosts";
-                string hosts = null;
-                if (File.Exists(hostslocation))
+                File.SetAttributes(hostslocation, FileAttributes.Normal);
+                var existing = File.ReadAllText(hostslocation);
+                var sb = new StringBuilder(existing);
+                if (!existing.EndsWith(Environment.NewLine))
+                    sb.Append(Environment.NewLine);
+                var added = 0;
+                foreach (var currentHostsDomain in hostsdomains)
                 {
-                    hosts = File.ReadAllText(hostslocation);
-                    File.SetAttributes(hostslocation, FileAttributes.Normal);
-                    DeleteFile(hostslocation);
-                }
-                File.Create(hostslocation).Close();
-                File.WriteAllText(hostslocation, hosts + Environment.NewLine);
-                foreach (
-                    var currentHostsDomain in
-                        hostsdomains.Where(
-                            currentHostsDomain =>
-                                hosts != null && hosts.IndexOf(currentHostsDomain, StringComparison.Ordinal) == -1))
-                {
-                    RunCmd($"/c echo 0.0.0.0 {currentHostsDomain} >> \"{hostslocation}\"");
+                    if (existing.IndexOf(currentHostsDomain, StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                    sb.Append("0.0.0.0 ").Append(currentHostsDomain).Append(Environment.NewLine);
+                    added++;
                     _OutPut($"Add to hosts - {currentHostsDomain}");
                 }
+                File.WriteAllText(hostslocation, sb.ToString());
+                _OutPut($"Hosts file updated: {added} new entries. (Firewall is NOT touched - by design)");
             }
             catch (Exception ex)
             {
@@ -927,70 +897,130 @@ namespace DWS_Lite
 #endif
             }
             RunCmd("/c ipconfig /flushdns");
+        }
 
-            _OutPut("Add hosts MS complete.");
-            BlockIpAddr();
+        // Windows 11 privacy/AI tweaks. Registry keys verified against the
+        // Win11Debloat project (2025). Only applied when build >= 22000.
+        private void ApplyWin11Tweaks()
+        {
+            try
+            {
+                // ---- Copilot (taskbar + policy) ----
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowCopilotButton",
+                    "0", RegistryValueKind.DWord);
+                SetRegValueHkcu(@"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", "1",
+                    RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", "1",
+                    RegistryValueKind.DWord);
+                _OutPut("Windows 11: Copilot disabled.");
+                // ---- Recall / Windows AI (snapshots) ----
+                SetRegValueHkcu(@"Software\Policies\Microsoft\Windows\WindowsAI", "DisableAIDataAnalysis", "1",
+                    RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Windows\WindowsAI", "DisableAIDataAnalysis", "1",
+                    RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Windows\WindowsAI", "AllowRecallEnablement", "0",
+                    RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Windows\WindowsAI", "TurnOffSavingSnapshots", "1",
+                    RegistryValueKind.DWord);
+                _OutPut("Windows 11: Recall / AI data analysis disabled.");
+                // ---- Bing in Search + Cortana ----
+                SetRegValueHkcu(@"Software\Policies\Microsoft\Windows\Explorer", "DisableSearchBoxSuggestions", "1",
+                    RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Windows\Windows Search", "AllowCortana", "0",
+                    RegistryValueKind.DWord);
+                SetRegValueHklm(@"Software\Policies\Microsoft\Windows\Windows Search", "CortanaConsent", "0",
+                    RegistryValueKind.DWord);
+                _OutPut("Windows 11: Bing/Cortana in search disabled.");
+                // ---- Widgets (News and Interests) ----
+                SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "AllowNewsAndInterests", "0",
+                    RegistryValueKind.DWord);
+                _OutPut("Windows 11: Widgets disabled.");
+                // ---- Start menu / Explorer ads & suggestions ----
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
+                    "SubscribedContent-338388SpotlightEnabled", "0", RegistryValueKind.DWord);
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
+                    "SubscribedContent-353694Enabled", "0", RegistryValueKind.DWord);
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
+                    "SubscribedContent-353696Enabled", "0", RegistryValueKind.DWord);
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
+                    "SystemPaneSuggestionsEnabled", "0", RegistryValueKind.DWord);
+                _OutPut("Windows 11: Start/Explorer ads and suggestions disabled.");
+                // ---- AI service auto-start ----
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Services\WSAIFabricSvc", "Start", "3",
+                    RegistryValueKind.DWord);
+                _OutPut("Windows 11: AI fabric service set to manual start.");
+                // ---- Prevent auto BitLocker/device encryption (24H2) ----
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\BitLocker", "PreventDeviceEncryption", "1",
+                    RegistryValueKind.DWord);
+                _OutPut("Windows 11: auto device encryption prevention set.");
+                _OutPut("Windows 11 tweaks applied.");
+            }
+            catch (Exception ex)
+            {
+                _OutPut("Error applying Windows 11 tweaks", LogLevel.Error);
+#if DEBUG
+                _OutPut(ex.Message, LogLevel.Debug);
+#endif
+                _fatalErrors++;
+                _errorsList.Add($"Error applying Windows 11 tweaks. Message: {ex.Message}");
+            }
+        }
+
+        // Removes packages by EXACT name for all users and also removes the
+        // provisioned (new-user) copy so they don't come back on new accounts.
+        private void DeleteAppxGroup(string[] packageNames, string logName)
+        {
+            if (packageNames == null || packageNames.Length == 0) return;
+            var namesList = string.Join(",", packageNames.Select(n => $"'{n}'"));
+            // PowerShell: exact match on Name, remove for every user + provisioned.
+            var ps =
+                $"$n=@({namesList}); " +
+                "foreach($x in $n){" +
+                "Get-AppxPackage -AllUsers -Name $x -EA SilentlyContinue | Remove-AppxPackage -AllUsers -EA SilentlyContinue; " +
+                "Get-AppxPackage -Name $x -EA SilentlyContinue | Remove-AppxPackage -EA SilentlyContinue; " +
+                "Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object {$_.DisplayName -eq $x} | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue" +
+                "}";
+            ProcStartargs("powershell", $"-NoProfile -ExecutionPolicy Bypass -Command \"{ps}\"");
+            _OutPut($"Delete apps ({logName}): {string.Join(", ", packageNames)}");
         }
 
         private void RemoveWindows10Apps()
         {
             if (checkBoxDeleteApp3d.Checked)
-            {
-                DeleteWindows10MetroApp("3d");
-                _OutPut("Delete builder 3D");
-            }
+                DeleteAppxGroup(Win11Apps.App3d, "3D");
             if (checkBoxDeleteAppCamera.Checked)
-            {
-                DeleteWindows10MetroApp("camera");
-                _OutPut("Delete Camera");
-            }
+                DeleteAppxGroup(Win11Apps.AppCamera, "Camera");
             if (checkBoxDeleteMailCalendarMaps.Checked)
-            {
-                DeleteWindows10MetroApp("communi");
-                DeleteWindows10MetroApp("maps");
-                _OutPut("Delete Mail, Calendar, Maps");
-            }
+                DeleteAppxGroup(Win11Apps.MailCalendarMaps, "Mail/Calendar/Maps");
             if (checkBoxDeleteAppBing.Checked)
-            {
-                DeleteWindows10MetroApp("bing");
-                _OutPut("Delete Money, Sports, News and Weather");
-            }
+                DeleteAppxGroup(Win11Apps.AppBing, "Bing apps");
             if (checkBoxDeleteAppZune.Checked)
-            {
-                DeleteWindows10MetroApp("zune");
-                _OutPut("Delete Groove Music and Film TV");
-            }
+                DeleteAppxGroup(Win11Apps.AppZune, "Groove/FilmTV");
             if (checkBoxDeleteAppPeopleOneNote.Checked)
-            {
-                DeleteWindows10MetroApp("people");
-                DeleteWindows10MetroApp("note");
-                _OutPut("Delete People and OneNote");
-            }
+                DeleteAppxGroup(Win11Apps.PeopleOneNote, "People/OneNote");
             if (checkBoxDeleteAppPhone.Checked)
-            {
-                DeleteWindows10MetroApp("phone");
-                _OutPut("Delete Phone Companion");
-            }
+                DeleteAppxGroup(Win11Apps.AppPhone, "Phone Link");
             if (checkBoxDeleteAppPhotos.Checked)
-            {
-                DeleteWindows10MetroApp("photo");
-                _OutPut("Delete Photos");
-            }
+                DeleteAppxGroup(Win11Apps.AppPhotos, "Photos");
             if (checkBoxDeleteAppSolit.Checked)
-            {
-                DeleteWindows10MetroApp("solit");
-                _OutPut("Delete Solitaire Collection");
-            }
+                DeleteAppxGroup(Win11Apps.AppSolitaire, "Solitaire");
             if (checkBoxDeleteAppVoice.Checked)
-            {
-                DeleteWindows10MetroApp("soundrec");
-                _OutPut("Delete Voice Recorder");
-            }
+                DeleteAppxGroup(Win11Apps.AppVoiceRecorder, "Voice Recorder");
             if (checkBoxDeleteAppXBOX.Checked)
-            {
-                DeleteWindows10MetroApp("xbox");
-                _OutPut("Delete XBOX");
-            }
+                DeleteAppxGroup(Win11Apps.AppXbox, "Xbox");
+            // ---- Windows 11 additions ----
+            if (checkBoxDeleteAppCopilot.Checked)
+                DeleteAppxGroup(Win11Apps.AppCopilot, "Copilot/AI");
+            if (checkBoxDeleteAppTeams.Checked)
+                DeleteAppxGroup(Win11Apps.AppTeams, "Teams");
+            if (checkBoxDeleteAppOutlook.Checked)
+                DeleteAppxGroup(Win11Apps.AppOutlook, "Outlook (new)");
+            if (checkBoxDeleteAppClipchamp.Checked)
+                DeleteAppxGroup(Win11Apps.AppClipchamp, "Clipchamp");
+            if (checkBoxDeleteAppWidgets.Checked)
+                DeleteAppxGroup(Win11Apps.AppWidgets, "Widgets");
+            if (checkBoxDeleteAppWin11Misc.Checked)
+                DeleteAppxGroup(Win11Apps.AppWin11Misc, "Win11 misc");
         }
 
         private void checkBoxDeleteWindows10Apps_CheckedChanged(object sender, EventArgs e)
@@ -1006,6 +1036,13 @@ namespace DWS_Lite
             checkBoxDeleteAppXBOX.Enabled = checkBoxDeleteWindows10Apps.Checked;
             checkBoxDeleteAppZune.Enabled = checkBoxDeleteWindows10Apps.Checked;
             checkBoxDeleteMailCalendarMaps.Enabled = checkBoxDeleteWindows10Apps.Checked;
+            // Windows 11 groups
+            checkBoxDeleteAppCopilot.Enabled = checkBoxDeleteWindows10Apps.Checked;
+            checkBoxDeleteAppTeams.Enabled = checkBoxDeleteWindows10Apps.Checked;
+            checkBoxDeleteAppOutlook.Enabled = checkBoxDeleteWindows10Apps.Checked;
+            checkBoxDeleteAppClipchamp.Enabled = checkBoxDeleteWindows10Apps.Checked;
+            checkBoxDeleteAppWidgets.Enabled = checkBoxDeleteWindows10Apps.Checked;
+            checkBoxDeleteAppWin11Misc.Enabled = checkBoxDeleteWindows10Apps.Checked;
         }
 
         private void btnDeleteAllWindows10Apps_Click(object sender, EventArgs e)
@@ -1019,7 +1056,9 @@ namespace DWS_Lite
                 MessageBox.Show(GetTranslateText("PressOkAndWait15"));
                 new Thread(() =>
                 {
-                    DeleteWindows10MetroApp(null);
+                    // Delete the whole curated catalog (exact IDs) instead of a
+                    // blind "*:*" wildcard, which nuked the Store and core apps.
+                    DeleteAppxGroup(Win11Apps.AllCatalogApps().ToArray(), "all catalog apps");
                     Invoke(new MethodInvoker(delegate
                     {
                         EnableOrDisableTab(true);
@@ -1126,6 +1165,10 @@ namespace DWS_Lite
             btnDeleteMetroAppsInfo.Enabled = enableordisable;
             btnDeleteOneDrive.Enabled = enableordisable;
             checkBoxDelKeyloggerTW78.Enabled = enableordisable;
+            // Windows 11 tweaks + expert-mode destructive toggles
+            checkBoxWin11Tweaks.Enabled = enableordisable;
+            checkBoxDeleteSpyServices.Enabled = enableordisable;
+            checkBoxBlockSpyIPs.Enabled = enableordisable;
             checkedListBoxUpdatesW78.Enabled = enableordisable && checkBoxDeleteWindows78Updates.Checked;
             if (WindowsUtil.SystemRestore_Status() == 0)
             {
@@ -1311,7 +1354,7 @@ namespace DWS_Lite
         {
             if (checkBoxAddToHosts78.Checked)
             {
-                AddToHostsAndFirewall();
+                AddSpyDomainsToHosts();
             }
             if (checkBoxSPYTasks78.Checked)
             {
@@ -1417,6 +1460,10 @@ namespace DWS_Lite
         }
 
 
+        // LEGACY (2015 IP list). Kept for the Win7/8 path and expert mode only.
+        // DWS 11 does NOT touch Windows Firewall (netsh) anymore and does NOT
+        // block explorer.exe / WSearch - that broke Store, updates and Explorer
+        // on Windows 10/11. Blocking is done via persistent blackhole routes only.
         private void BlockIpAddr()
         {
             string[] ipAddr =
@@ -1424,7 +1471,6 @@ namespace DWS_Lite
                 "104.96.147.3",
                 "111.221.29.177",
                 "111.221.29.253",
-                "111.221.64.0-111.221.127.255", // singapure
                 "131.253.40.37",
                 "134.170.115.60",
                 "134.170.165.248",
@@ -1434,16 +1480,10 @@ namespace DWS_Lite
                 "137.116.81.24",
                 "137.117.235.16",
                 "157.55.129.21",
-                "157.55.130.0-157.55.130.255",
                 "157.55.133.204",
-                "157.55.235.0-157.55.235.255",
-                "157.55.236.0-157.55.236.255", // NEW TH2 SPY IP
                 "157.55.240.220",
-                "157.55.52.0-157.55.52.255",
-                "157.55.56.0-157.55.56.255",
                 "157.56.106.189",
                 "157.56.121.89",
-                "157.56.124.87", // NEW TH2 Spy IP
                 "157.56.91.77",
                 "157.56.96.54",
                 "168.63.108.233",
@@ -1452,7 +1492,6 @@ namespace DWS_Lite
                 "191.232.80.58",
                 "191.232.80.62",
                 "191.237.208.126",
-                "195.138.255.0-195.138.255.255",
                 "2.22.61.43",
                 "2.22.61.66",
                 "204.79.197.200",
@@ -1462,19 +1501,17 @@ namespace DWS_Lite
                 "207.68.166.254",
                 "212.30.134.204",
                 "212.30.134.205",
-                "213.199.179.0-213.199.179.255", // Ireland
                 "23.102.21.4",
                 "23.218.212.69",
-                "23.223.20.82", // cache.datamart.windows.com
+                "23.223.20.82",
                 "23.57.101.163",
                 "23.57.107.163",
                 "23.57.107.27",
                 "23.99.10.11",
-                "64.4.23.0-64.4.23.255",
+                "64.4.23.101",
                 "64.4.54.22",
                 "64.4.54.32",
                 "64.4.6.100",
-                "65.39.117.230",
                 "65.39.117.230",
                 "65.52.100.11",
                 "65.52.100.7",
@@ -1489,34 +1526,21 @@ namespace DWS_Lite
                 "65.55.138.114",
                 "65.55.138.126",
                 "65.55.138.186",
-                "65.55.223.0-65.55.223.255",
                 "65.55.252.63",
                 "65.55.252.71",
                 "65.55.252.92",
                 "65.55.252.93",
                 "65.55.29.238",
                 "65.55.39.10",
-                "77.67.29.176" // NEW TH2 Spy IP
+                "77.67.29.176"
             };
             foreach (var currentIpAddr in ipAddr)
             {
+                // Persistent route to 0.0.0.0 = blackhole. No firewall involved.
                 RunCmd($"/c route -p ADD {currentIpAddr} MASK 255.255.255.255 0.0.0.0");
-                RunCmd($"/c route -p change {currentIpAddr} MASK 255.255.255.255 0.0.0.0 if 1");
-                RunCmd($"/c netsh advfirewall firewall delete rule name=\"{currentIpAddr}_Block\"");
-                RunCmd(
-                    string.Format(
-                        "/c netsh advfirewall firewall add rule name=\"{0}_Block\" dir=out interface=any action=block remoteip={0}",
-                        currentIpAddr));
-                _OutPut($"Add Windows Firewall rule: \"{currentIpAddr}_Block\"");
+                _OutPut($"Add persistent route (blackhole): {currentIpAddr}");
             }
-            RunCmd("/c netsh advfirewall firewall delete rule name=\"Explorer.EXE_BLOCK\"");
-            RunCmd(
-                $"/c netsh advfirewall firewall add rule name=\"Explorer.EXE_BLOCK\" dir=out interface=any action=block program=\"{_systemPath}Windows\\explorer.exe\"");
-            RunCmd("/c netsh advfirewall firewall delete rule name=\"WSearch_Block\"");
-            RunCmd(
-                "/c netsh advfirewall firewall add rule name=\"WSearch_Block\" dir=out interface=any action=block service=WSearch");
-            _OutPut("Add Windows Firewall rule: \"WSearch_Block\"");
-            _OutPut("Ip list blocked");
+            _OutPut("IP list blocked via routes. Firewall untouched.");
         }
 
         private void btnDisableOfficeUpdate_Click(object sender, EventArgs e)
@@ -1869,6 +1893,16 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
             checkBoxDeleteAppSolit.Text = $"{GetTranslateText("Delete")} Solitaire Collection";
             checkBoxDeleteAppVoice.Text = $"{GetTranslateText("Delete")} Voice Recorder";
             checkBoxDeleteAppXBOX.Text = $"{GetTranslateText("Delete")} XBOX";
+            // Windows 11 additions (fallback to en-US if key missing)
+            checkBoxDeleteAppCopilot.Text = GetTranslateText("checkBoxDeleteAppCopilot");
+            checkBoxDeleteAppTeams.Text = GetTranslateText("checkBoxDeleteAppTeams");
+            checkBoxDeleteAppOutlook.Text = GetTranslateText("checkBoxDeleteAppOutlook");
+            checkBoxDeleteAppClipchamp.Text = GetTranslateText("checkBoxDeleteAppClipchamp");
+            checkBoxDeleteAppWidgets.Text = GetTranslateText("checkBoxDeleteAppWidgets");
+            checkBoxDeleteAppWin11Misc.Text = GetTranslateText("checkBoxDeleteAppWin11Misc");
+            checkBoxWin11Tweaks.Text = GetTranslateText("checkBoxWin11Tweaks");
+            checkBoxDeleteSpyServices.Text = GetTranslateText("checkBoxDeleteSpyServices");
+            checkBoxBlockSpyIPs.Text = GetTranslateText("checkBoxBlockSpyIPs");
             btnRemoveOldFirewallRules.Text = GetTranslateText("RemoveAllOldFirewallRules");
         }
 

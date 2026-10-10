@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace DWS_Lite
@@ -68,6 +68,15 @@ namespace DWS_Lite
             this.checkBoxDeleteAppCamera = new System.Windows.Forms.CheckBox();
             this.checkBoxDeleteAppBing = new System.Windows.Forms.CheckBox();
             this.checkBoxDeleteMailCalendarMaps = new System.Windows.Forms.CheckBox();
+            this.checkBoxDeleteAppCopilot = new System.Windows.Forms.CheckBox();
+            this.checkBoxDeleteAppTeams = new System.Windows.Forms.CheckBox();
+            this.checkBoxDeleteAppOutlook = new System.Windows.Forms.CheckBox();
+            this.checkBoxDeleteAppClipchamp = new System.Windows.Forms.CheckBox();
+            this.checkBoxDeleteAppWidgets = new System.Windows.Forms.CheckBox();
+            this.checkBoxDeleteAppWin11Misc = new System.Windows.Forms.CheckBox();
+            this.checkBoxWin11Tweaks = new System.Windows.Forms.CheckBox();
+            this.checkBoxDeleteSpyServices = new System.Windows.Forms.CheckBox();
+            this.checkBoxBlockSpyIPs = new System.Windows.Forms.CheckBox();
             this.btnProfessionalMode = new System.Windows.Forms.CheckBox();
             this.tabPageUtilites = new System.Windows.Forms.TabPage();
             this.btnFixRotateScreen = new System.Windows.Forms.Button();
@@ -354,9 +363,19 @@ namespace DWS_Lite
             this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppCamera);
             this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppBing);
             this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteMailCalendarMaps);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppCopilot);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppTeams);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppOutlook);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppClipchamp);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppWidgets);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteAppWin11Misc);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxWin11Tweaks);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteSpyServices);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxBlockSpyIPs);
             this.Win10SettingsPanel.Location = new System.Drawing.Point(6, 3);
             this.Win10SettingsPanel.Margin = new System.Windows.Forms.Padding(0);
             this.Win10SettingsPanel.Name = "Win10SettingsPanel";
+            this.Win10SettingsPanel.AutoScroll = true;
             this.Win10SettingsPanel.Size = new System.Drawing.Size(434, 365);
             this.Win10SettingsPanel.TabIndex = 22;
             // 
@@ -407,7 +426,7 @@ namespace DWS_Lite
             this.labelInfoDeleteMetroApps.AutoSize = true;
             this.labelInfoDeleteMetroApps.BackColor = System.Drawing.Color.Transparent;
             this.labelInfoDeleteMetroApps.ForeColor = System.Drawing.Color.Red;
-            this.labelInfoDeleteMetroApps.Location = new System.Drawing.Point(3, 343);
+            this.labelInfoDeleteMetroApps.Location = new System.Drawing.Point(3, 497);
             this.labelInfoDeleteMetroApps.Name = "labelInfoDeleteMetroApps";
             this.labelInfoDeleteMetroApps.Size = new System.Drawing.Size(396, 13);
             this.labelInfoDeleteMetroApps.TabIndex = 20;
@@ -647,6 +666,136 @@ namespace DWS_Lite
             this.checkBoxDeleteMailCalendarMaps.Text = "Delete Mail,Calendar and Maps";
             this.checkBoxDeleteMailCalendarMaps.UseVisualStyleBackColor = false;
             // 
+            // checkBoxDeleteAppCopilot
+            // 
+            this.checkBoxDeleteAppCopilot.AutoSize = true;
+            this.checkBoxDeleteAppCopilot.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDeleteAppCopilot.Checked = true;
+            this.checkBoxDeleteAppCopilot.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxDeleteAppCopilot.Enabled = false;
+            this.checkBoxDeleteAppCopilot.Location = new System.Drawing.Point(3, 326);
+            this.checkBoxDeleteAppCopilot.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDeleteAppCopilot.Name = "checkBoxDeleteAppCopilot";
+            this.checkBoxDeleteAppCopilot.Size = new System.Drawing.Size(230, 17);
+            this.checkBoxDeleteAppCopilot.TabIndex = 23;
+            this.checkBoxDeleteAppCopilot.Text = "Delete Copilot, AI Hub and AI Provider";
+            this.checkBoxDeleteAppCopilot.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxDeleteAppTeams
+            // 
+            this.checkBoxDeleteAppTeams.AutoSize = true;
+            this.checkBoxDeleteAppTeams.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDeleteAppTeams.Checked = true;
+            this.checkBoxDeleteAppTeams.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxDeleteAppTeams.Enabled = false;
+            this.checkBoxDeleteAppTeams.Location = new System.Drawing.Point(3, 343);
+            this.checkBoxDeleteAppTeams.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDeleteAppTeams.Name = "checkBoxDeleteAppTeams";
+            this.checkBoxDeleteAppTeams.Size = new System.Drawing.Size(180, 17);
+            this.checkBoxDeleteAppTeams.TabIndex = 24;
+            this.checkBoxDeleteAppTeams.Text = "Delete Microsoft Teams";
+            this.checkBoxDeleteAppTeams.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxDeleteAppOutlook
+            // 
+            this.checkBoxDeleteAppOutlook.AutoSize = true;
+            this.checkBoxDeleteAppOutlook.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDeleteAppOutlook.Checked = true;
+            this.checkBoxDeleteAppOutlook.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxDeleteAppOutlook.Enabled = false;
+            this.checkBoxDeleteAppOutlook.Location = new System.Drawing.Point(3, 360);
+            this.checkBoxDeleteAppOutlook.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDeleteAppOutlook.Name = "checkBoxDeleteAppOutlook";
+            this.checkBoxDeleteAppOutlook.Size = new System.Drawing.Size(185, 17);
+            this.checkBoxDeleteAppOutlook.TabIndex = 25;
+            this.checkBoxDeleteAppOutlook.Text = "Delete new Outlook for Windows";
+            this.checkBoxDeleteAppOutlook.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxDeleteAppClipchamp
+            // 
+            this.checkBoxDeleteAppClipchamp.AutoSize = true;
+            this.checkBoxDeleteAppClipchamp.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDeleteAppClipchamp.Checked = true;
+            this.checkBoxDeleteAppClipchamp.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxDeleteAppClipchamp.Enabled = false;
+            this.checkBoxDeleteAppClipchamp.Location = new System.Drawing.Point(3, 377);
+            this.checkBoxDeleteAppClipchamp.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDeleteAppClipchamp.Name = "checkBoxDeleteAppClipchamp";
+            this.checkBoxDeleteAppClipchamp.Size = new System.Drawing.Size(129, 17);
+            this.checkBoxDeleteAppClipchamp.TabIndex = 26;
+            this.checkBoxDeleteAppClipchamp.Text = "Delete Clipchamp";
+            this.checkBoxDeleteAppClipchamp.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxDeleteAppWidgets
+            // 
+            this.checkBoxDeleteAppWidgets.AutoSize = true;
+            this.checkBoxDeleteAppWidgets.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDeleteAppWidgets.Checked = true;
+            this.checkBoxDeleteAppWidgets.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxDeleteAppWidgets.Enabled = false;
+            this.checkBoxDeleteAppWidgets.Location = new System.Drawing.Point(3, 394);
+            this.checkBoxDeleteAppWidgets.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDeleteAppWidgets.Name = "checkBoxDeleteAppWidgets";
+            this.checkBoxDeleteAppWidgets.Size = new System.Drawing.Size(199, 17);
+            this.checkBoxDeleteAppWidgets.TabIndex = 27;
+            this.checkBoxDeleteAppWidgets.Text = "Delete Widgets and News feed";
+            this.checkBoxDeleteAppWidgets.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxDeleteAppWin11Misc
+            // 
+            this.checkBoxDeleteAppWin11Misc.AutoSize = true;
+            this.checkBoxDeleteAppWin11Misc.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDeleteAppWin11Misc.Checked = true;
+            this.checkBoxDeleteAppWin11Misc.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxDeleteAppWin11Misc.Enabled = false;
+            this.checkBoxDeleteAppWin11Misc.Location = new System.Drawing.Point(3, 411);
+            this.checkBoxDeleteAppWin11Misc.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDeleteAppWin11Misc.Name = "checkBoxDeleteAppWin11Misc";
+            this.checkBoxDeleteAppWin11Misc.Size = new System.Drawing.Size(300, 17);
+            this.checkBoxDeleteAppWin11Misc.TabIndex = 28;
+            this.checkBoxDeleteAppWin11Misc.Text = "Delete PC Manager, Get Started, Feedback, etc.";
+            this.checkBoxDeleteAppWin11Misc.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxWin11Tweaks
+            // 
+            this.checkBoxWin11Tweaks.AutoSize = true;
+            this.checkBoxWin11Tweaks.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxWin11Tweaks.Checked = true;
+            this.checkBoxWin11Tweaks.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxWin11Tweaks.Location = new System.Drawing.Point(3, 441);
+            this.checkBoxWin11Tweaks.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxWin11Tweaks.Name = "checkBoxWin11Tweaks";
+            this.checkBoxWin11Tweaks.Size = new System.Drawing.Size(330, 17);
+            this.checkBoxWin11Tweaks.TabIndex = 29;
+            this.checkBoxWin11Tweaks.Text = "Windows 11 tweaks: Copilot, Recall, Widgets, ads (registry)";
+            this.checkBoxWin11Tweaks.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxDeleteSpyServices
+            // 
+            this.checkBoxDeleteSpyServices.AutoSize = true;
+            this.checkBoxDeleteSpyServices.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDeleteSpyServices.ForeColor = System.Drawing.Color.Red;
+            this.checkBoxDeleteSpyServices.Location = new System.Drawing.Point(3, 464);
+            this.checkBoxDeleteSpyServices.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDeleteSpyServices.Name = "checkBoxDeleteSpyServices";
+            this.checkBoxDeleteSpyServices.Size = new System.Drawing.Size(300, 17);
+            this.checkBoxDeleteSpyServices.TabIndex = 30;
+            this.checkBoxDeleteSpyServices.Text = "EXPERT: delete telemetry services (not just disable)";
+            this.checkBoxDeleteSpyServices.UseVisualStyleBackColor = false;
+            // 
+            // checkBoxBlockSpyIPs
+            // 
+            this.checkBoxBlockSpyIPs.AutoSize = true;
+            this.checkBoxBlockSpyIPs.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxBlockSpyIPs.ForeColor = System.Drawing.Color.Red;
+            this.checkBoxBlockSpyIPs.Location = new System.Drawing.Point(3, 481);
+            this.checkBoxBlockSpyIPs.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxBlockSpyIPs.Name = "checkBoxBlockSpyIPs";
+            this.checkBoxBlockSpyIPs.Size = new System.Drawing.Size(320, 17);
+            this.checkBoxBlockSpyIPs.TabIndex = 31;
+            this.checkBoxBlockSpyIPs.Text = "EXPERT: block 2015 spy IPs via persistent routes";
+            this.checkBoxBlockSpyIPs.UseVisualStyleBackColor = false;
+            // 
             // btnProfessionalMode
             // 
             this.btnProfessionalMode.AutoSize = true;
@@ -874,9 +1023,14 @@ namespace DWS_Lite
             this.textBox1.ReadOnly = true;
             this.textBox1.Size = new System.Drawing.Size(417, 258);
             this.textBox1.TabIndex = 13;
-            this.textBox1.Text = "1.6 Build 722 Support Windows Redstone\r\n- VS 2015 code style\r\n+ add new spying ta" +
-    "sks\r\n+ add auto-update\r\n+ add new spying hosts\r\n\r\n1.6 Build 717 rollup\r\n- Add Pe" +
-    "rsian Language\r\n- Fix Some things";
+            this.textBox1.Text = "2.0 DWS 11 - Windows 11 edition\r\n+ Windows 11 detection (build >= 22000)\r\n+ exact" +
+    " package IDs for app removal (all users + provisioned)\r\n+ Copilot/Teams/Outlook/C" +
+    "lipchamp/Widgets removal\r\n+ Windows 11 registry tweaks (Copilot, Recall, Widgets," +
+    " ads)\r\n+ telemetry services disabled by default (delete = expert only)\r\n+ updat" +
+    "ed 2025 hosts blocklist, firewall never touched\r\n- removed insecure HTTP auto-up" +
+    "date\r\n\r\n1.6 Build 722 Support Windows Redstone\r\n- VS 2015 code style\r\n+ add new " +
+    "spying tasks\r\n+ add new spying hosts\r\n\r\n1.6 Build 717 rollup\r\n- Add Persian Lan" +
+    "guage\r\n- Fix Some things";
             // 
             // linkLabelSourceCode
             // 
@@ -1191,6 +1345,15 @@ namespace DWS_Lite
         private TextBox textBox1;
         private LinkLabel linkLabel2;
         private Label label2;
+        private CheckBox checkBoxDeleteAppCopilot;
+        private CheckBox checkBoxDeleteAppTeams;
+        private CheckBox checkBoxDeleteAppOutlook;
+        private CheckBox checkBoxDeleteAppClipchamp;
+        private CheckBox checkBoxDeleteAppWidgets;
+        private CheckBox checkBoxDeleteAppWin11Misc;
+        private CheckBox checkBoxWin11Tweaks;
+        private CheckBox checkBoxDeleteSpyServices;
+        private CheckBox checkBoxBlockSpyIPs;
     }
 }
 
