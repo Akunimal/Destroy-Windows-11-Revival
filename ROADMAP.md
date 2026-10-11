@@ -106,7 +106,8 @@ build is **done**, **compiles clean** (0 errors, 0 warnings) and is committed on
       for non-string resources.
 - [x] **GitHub Actions CI** (`.github/workflows/build.yml`) builds the `win11` branch
       on `windows-latest`, checks the binary was produced and uploads it as an
-      artifact.
+      artifact. Verified green on the commit that landed all of the above —
+      [run 38096993130](https://github.com/Akunimal/Destroy-Windows-11-Revival/actions/runs/38096993130).
 - [x] **`build.cmd`** one-step local build; documented in the README.
 - [x] `.gitignore` confirmed to cover `bin/`, `obj/`, `*.pdb`, `*.log`.
 
