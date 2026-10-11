@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -18,15 +18,6 @@
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
     There are any number of "resheader" rows that contain simple 
     name/value pairs.
     
@@ -249,5 +240,41 @@ Ferner biete das Programm auch das Starten über Befehlszeilenargumente an:
 /destroy 	Mit diesem Befehl beginnt das Programm seine Reinigung ihrer Systems.
 
 Hinweise: Sie können /destroy und /deleteapp nicht gleichzeitig verwenden. Ferner können Sie /deleteapp nicht mehrfach verwenden.</value>
+  </data>
+  <data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+    <value>Copilot, AI Hub und AI Provider löschen</value>
+  </data>
+  <data name="checkBoxDeleteAppTeams" xml:space="preserve">
+    <value>Microsoft Teams löschen</value>
+  </data>
+  <data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+    <value>Neues Outlook für Windows löschen</value>
+  </data>
+  <data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+    <value>Clipchamp löschen</value>
+  </data>
+  <data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+    <value>Widgets und Newsfeed löschen</value>
+  </data>
+  <data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+    <value>PC Manager, Erste Schritte, Feedback usw. löschen</value>
+  </data>
+  <data name="checkBoxWin11Tweaks" xml:space="preserve">
+    <value>Windows 11-Optimierungen: Copilot, Recall, Widgets, Werbung (Registrierung)</value>
+  </data>
+  <data name="checkBoxDeleteSpyServices" xml:space="preserve">
+    <value>EXPERTE: Telemetriedienste löschen (nicht nur deaktivieren)</value>
+  </data>
+  <data name="checkBoxBlockSpyIPs" xml:space="preserve">
+    <value>EXPERTE: 2015 Spy-IPs über persistente Routen blockieren</value>
+  </data>
+  <data name="checkBoxWin11DarkMode" xml:space="preserve">
+    <value>Windows 11-Dunkelmodus (nur Windows 11)</value>
+  </data>
+  <data name="btnBackupRegistry" xml:space="preserve">
+    <value>Registrierung jetzt sichern</value>
+  </data>
+  <data name="btnRestoreRegistryBackup" xml:space="preserve">
+    <value>Registrierungs-Backup wiederherstellen...</value>
   </data>
 </root>

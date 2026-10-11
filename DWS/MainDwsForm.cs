@@ -40,6 +40,11 @@ namespace DWS_Lite
         private string _system32Location;
         private bool _win10 = true;
         private bool _win11;
+        private int _buildNumber;
+        // Windows 11 look: rounded corners, modern palette and font, static
+        // accent border instead of the original animated rainbow border.
+        private bool _win11ModernLook = true;
+        private bool _win11DarkTheme;
 
         public MainDwsForm(string[] args)
         {
@@ -50,6 +55,9 @@ namespace DWS_Lite
             RecreateLogFile(LogFileName);
             // Check windows version
             CheckWindowsVersion();
+            // Windows 11 visual integration (rounded corners, dark title bar,
+            // modern palette + font). No-op on Windows 10 and older.
+            ApplyWindows11Look();
             //Check SYSNATIVE (x64)
             _SetShellSys32Path();
             ProfessionalModeSet(false);
@@ -118,9 +126,7 @@ namespace DWS_Lite
                 // ReSharper disable once UnusedVariable
             catch (Exception ex)
             {
-#if DEBUG
                 _OutPut($"Error in AnimateBackground: {ex.Message}", LogLevel.Debug);
-#endif
             }
         }
 
@@ -187,6 +193,7 @@ namespace DWS_Lite
         private void CheckWindowsVersion()
         {
             var windowsBuildNumber = WindowsUtil.GetWindowsBuildNumber();
+            _buildNumber = windowsBuildNumber;
             if (windowsBuildNumber < 7600)
             {
                 if (MessageBox.Show(@"Minimum windows version - 7\nExit from the program?", @"Error",
@@ -200,6 +207,8 @@ namespace DWS_Lite
                 _win11 = true;
                 _OutPut($"Windows 11 detected (build {windowsBuildNumber}).", LogLevel.Info);
             }
+            // The dark-mode toggle only makes sense on Windows 11.
+            checkBoxWin11DarkMode.Visible = _win11;
             // check Win 10/11 vs 7/8.1
             if (windowsBuildNumber >= 10000) return;
             _win10 = false;
@@ -216,6 +225,54 @@ namespace DWS_Lite
                 checkedListBoxUpdatesW78.SetItemChecked(i, true);
             }
             //------------------------------------------
+        }
+
+        /// <summary>
+        /// Applies the Windows 11 look: rounded corners, a matching title bar, the
+        /// modern palette and font. On Windows 10 / 7 / 8.1 nothing happens and the
+        /// original flat look is kept.
+        /// </summary>
+        private void ApplyWindows11Look()
+        {
+            if (!_win11 || !_win11ModernLook) return;
+
+            try
+            {
+                Win11Visual.ApplyWin11Chrome(this, _buildNumber, _win11DarkTheme);
+                Win11Visual.ApplyModernFont(this, Win11Visual.ModernFontFamily());
+                Win11Visual.ApplyPalette(this, _win11DarkTheme);
+
+                // The original 1px picture-box borders clash with rounded corners.
+                BorderUP.Visible = false;
+                BorderDown.Visible = false;
+                BorderLeft.Visible = false;
+                BorderR.Visible = false;
+
+                // Dark mode is a UI preference, not a professional-only toggle.
+                checkBoxWin11DarkMode.Enabled = true;
+
+                _OutPut($"Windows 11 look applied ({(_win11DarkTheme ? "dark" : "light")} palette).", LogLevel.Info);
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"Error applying Windows 11 look: {ex.Message}", LogLevel.Error);
+            }
+        }
+
+        /// <summary>Switches between the Windows 11 dark and light palette at runtime.</summary>
+        private void SetWindows11DarkTheme(bool dark)
+        {
+            _win11DarkTheme = dark;
+            if (!_win11 || !_win11ModernLook) return;
+
+            Win11Visual.ApplyWin11Chrome(this, _buildNumber, dark);
+            Win11Visual.ApplyPalette(this, dark);
+            _OutPut($"Windows 11 dark theme {(dark ? "enabled" : "disabled")}.", LogLevel.Info);
+        }
+
+        private void checkBoxWin11DarkMode_CheckedChanged(object sender, EventArgs e)
+        {
+            SetWindows11DarkTheme(checkBoxWin11DarkMode.Checked);
         }
 
         private void CheckEnableOrDisableUac()
@@ -310,9 +367,7 @@ namespace DWS_Lite
                 // ReSharper disable once UnusedVariable
             catch (Exception ex)
             {
-#if DEBUG
                 _OutPut(ex.Message, LogLevel.Debug);
-#endif
             }
         }
 
@@ -358,9 +413,7 @@ namespace DWS_Lite
             catch (Exception ex)
             {
                 _OutPut($"Error start prog {name} {args}", LogLevel.Error);
-#if DEBUG
                 _OutPut(ex.Message, LogLevel.Debug);
-#endif
                 _fatalErrors++;
                 _errorsList.Add($"Error start prog {name} {args}");
             }
@@ -410,6 +463,18 @@ namespace DWS_Lite
 
         private void DestroyWindowsSpyingMainThread()
         {
+            // Snapshot every registry value we are about to change, so the whole
+            // run can be reverted from the Utilities tab.
+            try
+            {
+                _OutPut("Backing up the registry values DWS is going to change...");
+                RegistryBackup.CreateBackup(m => _OutPut(m, LogLevel.Debug));
+            }
+            catch (Exception ex)
+            {
+                _OutPut("Warning: could not create a registry backup before applying changes.", LogLevel.Warning);
+                _OutPut(ex.Message, LogLevel.Debug);
+            }
             if (checkBoxCreateSystemRestorePoint.Checked)
             {
                 try
@@ -423,9 +488,7 @@ namespace DWS_Lite
                 catch (Exception ex)
                 {
                     _OutPut("Error creating restore point.");
-#if DEBUG
                     _OutPut(ex.Message, LogLevel.Debug);
-#endif
                 }
             }
             Progressbaradd(10);
@@ -557,9 +620,7 @@ namespace DWS_Lite
                 catch (Exception ex)
                 {
                     _OutPut("Error disable windows Defender or Smart Screen", LogLevel.Error);
-#if DEBUG
                     _OutPut(ex.Message, LogLevel.Debug);
-#endif
                     _fatalErrors++;
                     _errorsList.Add($"Error disable Windows Defender or Smart Screen. Message: {ex.Message}");
                 }
@@ -607,9 +668,7 @@ namespace DWS_Lite
                     // ReSharper disable once EmptyGeneralCatchClause
                 catch (Exception ex)
                 {
-#if DEBUG
                     _OutPut(ex.Message, LogLevel.Debug);
-#endif
                 }
             }
         }
@@ -892,9 +951,7 @@ namespace DWS_Lite
                 _errorsList.Add($"Error add to hosts. Message: {ex.Message}");
                 _fatalErrors++;
                 _OutPut("Error add HOSTS", LogLevel.Error);
-#if DEBUG
                 _OutPut(ex.Message, LogLevel.Debug);
-#endif
             }
             RunCmd("/c ipconfig /flushdns");
         }
@@ -962,9 +1019,7 @@ namespace DWS_Lite
             catch (Exception ex)
             {
                 _OutPut("Error applying Windows 11 tweaks", LogLevel.Error);
-#if DEBUG
                 _OutPut(ex.Message, LogLevel.Debug);
-#endif
                 _fatalErrors++;
                 _errorsList.Add($"Error applying Windows 11 tweaks. Message: {ex.Message}");
             }
@@ -1134,6 +1189,68 @@ namespace DWS_Lite
             ProcStartargs("notepad", _system32Location + @"drivers\etc\hosts");
         }
 
+        /// <summary>Manual "backup the registry now" action.</summary>
+        private void btnBackupRegistry_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var folder = RegistryBackup.CreateBackup(m => _OutPut(m, LogLevel.Debug));
+                MessageBox.Show(
+                    $"Registry backup created in:\n\n{folder}\n\nUse \"Restore registry backup...\" to undo the changes.",
+                    "Backup complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                _OutPut("Error creating registry backup", LogLevel.Error);
+                _OutPut(ex.Message, LogLevel.Debug);
+                MessageBox.Show($"Could not create a registry backup:\n{ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>Undo a previous backup. Newest backup is offered by default.</summary>
+        private void btnRestoreRegistryBackup_Click(object sender, EventArgs e)
+        {
+            var backups = RegistryBackup.ListBackups();
+            if (backups.Count == 0)
+            {
+                MessageBox.Show(
+                    "No registry backup was found on this computer yet.\n\n" +
+                    "Run the tool once (or press \"Backup registry now\") so a backup is created automatically.",
+                    "Nothing to restore", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var newest = backups[0];
+            var older = backups.Count - 1;
+            var answer = MessageBox.Show(
+                $"Restore the registry backup from\n\n{Path.GetFileName(newest)}\n\n" +
+                "This puts back the previous values of every setting DWS changed, and removes the ones that did not exist before." +
+                (older > 0
+                    ? $"\n\n{older} older backup(s) also exist in the same folder if you need them."
+                    : string.Empty) +
+                "\n\nContinue?",
+                "Restore registry backup", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (answer != DialogResult.Yes) return;
+
+            try
+            {
+                RegistryBackup.Restore(newest, m => _OutPut(m, LogLevel.Debug));
+                _OutPut($"Registry backup restored from {newest}.", LogLevel.Info);
+                MessageBox.Show(
+                    $"Registry restored from:\n{newest}\n\nSome settings only take effect after signing out and back in, or after a reboot.",
+                    "Restore complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                _OutPut("Error restoring registry backup", LogLevel.Error);
+                _OutPut(ex.Message, LogLevel.Debug);
+                MessageBox.Show($"Could not restore the backup:\n{ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void DestroyWindowsSpyingMainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             Process.GetCurrentProcess().Kill();
@@ -1228,9 +1345,7 @@ namespace DWS_Lite
                     MessageBox.Show(ex.Message, GetTranslateText("Error"), MessageBoxButtons.OK,
                         MessageBoxIcon.Error);
                 }));
-#if DEBUG
                     _OutPut(ex.Message, LogLevel.Debug);
-#endif
             }
             Invoke(new MethodInvoker(delegate
             {
@@ -1242,7 +1357,9 @@ namespace DWS_Lite
 
         private void linkLabelSourceCode_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start("https://github.com/spinda/Destroy-Windows-10-Spying");
+            // DWS 11 Revival: source link now points at this repo. The original
+            // upstream projects (Nummer, spinda) are credited in README/About.
+            Process.Start("https://github.com/Akunimal/Destroy-Windows-11-Revival");
         }
 
         private void btnRemoveOldFirewallRules_Click(object sender, EventArgs e)
@@ -1688,6 +1805,9 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
 
         private void ChangeBorderColor(Color cl)
         {
+            // With the Windows 11 look the 1px borders are removed in favour of the
+            // native rounded window chrome, so there is nothing to recolour.
+            if (_win11 && _win11ModernLook) return;
             try
             {
                 Invoke(new MethodInvoker(delegate
@@ -1907,7 +2027,10 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
             checkBoxWin11Tweaks.Text = GetTranslateText("checkBoxWin11Tweaks");
             checkBoxDeleteSpyServices.Text = GetTranslateText("checkBoxDeleteSpyServices");
             checkBoxBlockSpyIPs.Text = GetTranslateText("checkBoxBlockSpyIPs");
+            checkBoxWin11DarkMode.Text = GetTranslateText("checkBoxWin11DarkMode");
             btnRemoveOldFirewallRules.Text = GetTranslateText("RemoveAllOldFirewallRules");
+            btnBackupRegistry.Text = GetTranslateText("btnBackupRegistry");
+            btnRestoreRegistryBackup.Text = GetTranslateText("btnRestoreRegistryBackup");
         }
 
         private string GetTranslateText(string name)
@@ -1927,9 +2050,7 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
                 // ReSharper disable once UnusedVariable
             catch (Exception ex)
             {
-#if DEBUG
                 _OutPut($"Error get translate {name}. \nError: {ex.Message}", LogLevel.Debug);
-#endif
                 return en_US.ResourceManager.GetString(name);
             }
         }

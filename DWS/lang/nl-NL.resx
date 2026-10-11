@@ -18,15 +18,6 @@
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
     There are any number of "resheader" rows that contain simple 
     name/value pairs.
     
@@ -257,5 +248,41 @@ Verwijder GWX</value>
   </data>
   <data name="checkBoxDeleteWindows78Updates" xml:space="preserve">
     <value>Verwijder spionage updates</value>
+  </data>
+  <data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+    <value>Copilot, AI Hub en AI Provider verwijderen</value>
+  </data>
+  <data name="checkBoxDeleteAppTeams" xml:space="preserve">
+    <value>Microsoft Teams verwijderen</value>
+  </data>
+  <data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+    <value>Nieuwe Outlook voor Windows verwijderen</value>
+  </data>
+  <data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+    <value>Clipchamp verwijderen</value>
+  </data>
+  <data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+    <value>Widgets en nieuwsfeed verwijderen</value>
+  </data>
+  <data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+    <value>PC Manager, Aan de slag, Feedback, enz. verwijderen</value>
+  </data>
+  <data name="checkBoxWin11Tweaks" xml:space="preserve">
+    <value>Windows 11-tweaks: Copilot, Recall, Widgets, advertenties (register)</value>
+  </data>
+  <data name="checkBoxDeleteSpyServices" xml:space="preserve">
+    <value>EXPERT: telemetrieservices verwijderen (niet alleen uitschakelen)</value>
+  </data>
+  <data name="checkBoxBlockSpyIPs" xml:space="preserve">
+    <value>EXPERT: 2015 spy-IP-adressen blokkeren via persistente routes</value>
+  </data>
+  <data name="checkBoxWin11DarkMode" xml:space="preserve">
+    <value>Donkere modus voor Windows 11 (alleen Windows 11)</value>
+  </data>
+  <data name="btnBackupRegistry" xml:space="preserve">
+    <value>Back-up van het register maken</value>
+  </data>
+  <data name="btnRestoreRegistryBackup" xml:space="preserve">
+    <value>Back-up van het register herstellen...</value>
   </data>
 </root>

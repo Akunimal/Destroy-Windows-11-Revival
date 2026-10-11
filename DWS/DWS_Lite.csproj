@@ -37,7 +37,7 @@
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup>
-    <ApplicationIcon>other_cat.ico</ApplicationIcon>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject />
@@ -162,6 +162,8 @@
     <Compile Include="Lib\Paths.cs" />
     <Compile Include="Lib\WindowsUtil.cs" />
     <Compile Include="Lib\Win11Apps.cs" />
+    <Compile Include="Lib\Win11Visual.cs" />
+    <Compile Include="Lib\RegistryBackup.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="lang\fa-IR.resx">
@@ -260,16 +262,42 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="other_cat.ico" />
-    <None Include="Resources\minimize2.png" />
-    <None Include="Resources\close2.png" />
-    <None Include="Resources\minimize1.png" />
-    <None Include="Resources\close1.png" />
-    <None Include="Resources\close.png" />
-    <None Include="Resources\minimize.png" />
-    <None Include="Resources\warning.png" />
+    <Content Include="icon.ico" />
+    <!-- Embedded (not resx) so modern MSBuild can build .NET Framework 4.0:
+         binary ResXFileRef blobs need System.Resources.Extensions (4.6.2+). -->
+    <EmbeddedResource Include="Resources\minimize2.png">
+      <LogicalName>DWS_Lite.Resources.minimize2.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\close2.png">
+      <LogicalName>DWS_Lite.Resources.close2.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\minimize1.png">
+      <LogicalName>DWS_Lite.Resources.minimize1.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\close1.png">
+      <LogicalName>DWS_Lite.Resources.close1.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\close.png">
+      <LogicalName>DWS_Lite.Resources.close.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\minimize.png">
+      <LogicalName>DWS_Lite.Resources.minimize.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\warning.png">
+      <LogicalName>DWS_Lite.Resources.warning.png</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <!--
+      .NET Framework 4.0 targeting pack, so the project builds with any modern
+      MSBuild / Visual Studio without installing the retired 4.0 SDK.
+      The package's build\*.targets sets TargetFrameworkRootPath for v4.0.
+    -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net40">
+      <Version>1.0.3</Version>
+    </PackageReference>
+  </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>
     </PreBuildEvent>

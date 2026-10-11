@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -18,15 +18,6 @@
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
     There are any number of "resheader" rows that contain simple 
     name/value pairs.
     
@@ -259,5 +250,41 @@ DWSは現時点で一番効果的なプログラムです。DWSは開発中で�
   </data>
   <data name="btnFixRotateScreen" xml:space="preserve">
     <value>画面回転しないのを修正</value>
+  </data>
+  <data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+    <value>Copilot、AI Hub、AI Provider を削除する</value>
+  </data>
+  <data name="checkBoxDeleteAppTeams" xml:space="preserve">
+    <value>Microsoft Teams を削除する</value>
+  </data>
+  <data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+    <value>新しい Outlook for Windows を削除する</value>
+  </data>
+  <data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+    <value>Clipchamp を削除する</value>
+  </data>
+  <data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+    <value>Widgets とニュース フィードを削除する</value>
+  </data>
+  <data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+    <value>PC Manager、Get Started、Feedback などを削除する</value>
+  </data>
+  <data name="checkBoxWin11Tweaks" xml:space="preserve">
+    <value>Windows 11 の微調整: Copilot、Recall、Widgets、広告 (レジストリ)</value>
+  </data>
+  <data name="checkBoxDeleteSpyServices" xml:space="preserve">
+    <value>上級者向け: テレメトリ サービスを削除する (無効化だけでなく)</value>
+  </data>
+  <data name="checkBoxBlockSpyIPs" xml:space="preserve">
+    <value>上級者向け: 2015 個のスパイ IP を永続的なルートでブロックする</value>
+  </data>
+  <data name="checkBoxWin11DarkMode" xml:space="preserve">
+    <value>Windows 11 ダーク モード (Windows 11 のみ)</value>
+  </data>
+  <data name="btnBackupRegistry" xml:space="preserve">
+    <value>今すぐレジストリをバックアップ</value>
+  </data>
+  <data name="btnRestoreRegistryBackup" xml:space="preserve">
+    <value>レジストリのバックアップを復元...</value>
   </data>
 </root>

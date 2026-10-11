@@ -77,10 +77,13 @@ namespace DWS_Lite
             this.checkBoxWin11Tweaks = new System.Windows.Forms.CheckBox();
             this.checkBoxDeleteSpyServices = new System.Windows.Forms.CheckBox();
             this.checkBoxBlockSpyIPs = new System.Windows.Forms.CheckBox();
+            this.checkBoxWin11DarkMode = new System.Windows.Forms.CheckBox();
             this.btnProfessionalMode = new System.Windows.Forms.CheckBox();
             this.tabPageUtilites = new System.Windows.Forms.TabPage();
             this.btnFixRotateScreen = new System.Windows.Forms.Button();
             this.btnRemoveOldFirewallRules = new System.Windows.Forms.Button();
+            this.btnBackupRegistry = new System.Windows.Forms.Button();
+            this.btnRestoreRegistryBackup = new System.Windows.Forms.Button();
             this.btnDeleteOneDrive = new System.Windows.Forms.Button();
             this.btnDeleteMetroAppsInfo = new System.Windows.Forms.Button();
             this.groupBoxWindowsUpdate = new System.Windows.Forms.GroupBox();
@@ -372,6 +375,7 @@ namespace DWS_Lite
             this.Win10SettingsPanel.Controls.Add(this.checkBoxWin11Tweaks);
             this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteSpyServices);
             this.Win10SettingsPanel.Controls.Add(this.checkBoxBlockSpyIPs);
+            this.Win10SettingsPanel.Controls.Add(this.checkBoxWin11DarkMode);
             this.Win10SettingsPanel.Location = new System.Drawing.Point(6, 3);
             this.Win10SettingsPanel.Margin = new System.Windows.Forms.Padding(0);
             this.Win10SettingsPanel.Name = "Win10SettingsPanel";
@@ -575,6 +579,7 @@ namespace DWS_Lite
             this.checkBoxDeleteWindows10Apps.Text = "Delete windows 10 metro apps";
             this.checkBoxDeleteWindows10Apps.UseVisualStyleBackColor = false;
             this.checkBoxDeleteWindows10Apps.CheckedChanged += new System.EventHandler(this.checkBoxDeleteWindows10Apps_CheckedChanged);
+            this.checkBoxWin11DarkMode.CheckedChanged += new System.EventHandler(this.checkBoxWin11DarkMode_CheckedChanged);
             // 
             // checkBoxDeleteAppPeopleOneNote
             // 
@@ -795,6 +800,19 @@ namespace DWS_Lite
             this.checkBoxBlockSpyIPs.TabIndex = 31;
             this.checkBoxBlockSpyIPs.Text = "EXPERT: block 2015 spy IPs via persistent routes";
             this.checkBoxBlockSpyIPs.UseVisualStyleBackColor = false;
+            //
+            // checkBoxWin11DarkMode
+            //
+            this.checkBoxWin11DarkMode.AutoSize = true;
+            this.checkBoxWin11DarkMode.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxWin11DarkMode.Enabled = false;
+            this.checkBoxWin11DarkMode.Location = new System.Drawing.Point(3, 498);
+            this.checkBoxWin11DarkMode.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxWin11DarkMode.Name = "checkBoxWin11DarkMode";
+            this.checkBoxWin11DarkMode.Size = new System.Drawing.Size(320, 17);
+            this.checkBoxWin11DarkMode.TabIndex = 32;
+            this.checkBoxWin11DarkMode.Text = "Windows 11 dark mode (Windows 11 only)";
+            this.checkBoxWin11DarkMode.UseVisualStyleBackColor = false;
             // 
             // btnProfessionalMode
             // 
@@ -814,6 +832,8 @@ namespace DWS_Lite
             this.tabPageUtilites.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.tabPageUtilites.Controls.Add(this.btnFixRotateScreen);
             this.tabPageUtilites.Controls.Add(this.btnRemoveOldFirewallRules);
+            this.tabPageUtilites.Controls.Add(this.btnBackupRegistry);
+            this.tabPageUtilites.Controls.Add(this.btnRestoreRegistryBackup);
             this.tabPageUtilites.Controls.Add(this.btnDeleteOneDrive);
             this.tabPageUtilites.Controls.Add(this.btnDeleteMetroAppsInfo);
             this.tabPageUtilites.Controls.Add(this.groupBoxWindowsUpdate);
@@ -852,6 +872,32 @@ namespace DWS_Lite
             this.btnRemoveOldFirewallRules.Text = "Remove all old DWS firewall rules";
             this.btnRemoveOldFirewallRules.UseVisualStyleBackColor = false;
             this.btnRemoveOldFirewallRules.Click += new System.EventHandler(this.btnRemoveOldFirewallRules_Click);
+            //
+            // btnBackupRegistry
+            //
+            this.btnBackupRegistry.BackColor = System.Drawing.Color.Transparent;
+            this.btnBackupRegistry.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnBackupRegistry.ForeColor = System.Drawing.Color.Black;
+            this.btnBackupRegistry.Location = new System.Drawing.Point(8, 205);
+            this.btnBackupRegistry.Name = "btnBackupRegistry";
+            this.btnBackupRegistry.Size = new System.Drawing.Size(202, 23);
+            this.btnBackupRegistry.TabIndex = 12;
+            this.btnBackupRegistry.Text = "Backup registry now";
+            this.btnBackupRegistry.UseVisualStyleBackColor = false;
+            this.btnBackupRegistry.Click += new System.EventHandler(this.btnBackupRegistry_Click);
+            //
+            // btnRestoreRegistryBackup
+            //
+            this.btnRestoreRegistryBackup.BackColor = System.Drawing.Color.Transparent;
+            this.btnRestoreRegistryBackup.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRestoreRegistryBackup.ForeColor = System.Drawing.Color.DarkBlue;
+            this.btnRestoreRegistryBackup.Location = new System.Drawing.Point(223, 205);
+            this.btnRestoreRegistryBackup.Name = "btnRestoreRegistryBackup";
+            this.btnRestoreRegistryBackup.Size = new System.Drawing.Size(214, 23);
+            this.btnRestoreRegistryBackup.TabIndex = 13;
+            this.btnRestoreRegistryBackup.Text = "Restore registry backup...";
+            this.btnRestoreRegistryBackup.UseVisualStyleBackColor = false;
+            this.btnRestoreRegistryBackup.Click += new System.EventHandler(this.btnRestoreRegistryBackup_Click);
             // 
             // btnDeleteOneDrive
             // 
@@ -1318,6 +1364,8 @@ namespace DWS_Lite
         private TabPage tabPageReadMe;
         private LinkLabel linkLabelSourceCode;
         private Button btnRemoveOldFirewallRules;
+        private Button btnBackupRegistry;
+        private Button btnRestoreRegistryBackup;
         private GroupBox groupBoxLanguage;
         private ComboBox comboBoxLanguageSelect;
         private Button btnDestroyWindows78Spy;
@@ -1354,6 +1402,7 @@ namespace DWS_Lite
         private CheckBox checkBoxWin11Tweaks;
         private CheckBox checkBoxDeleteSpyServices;
         private CheckBox checkBoxBlockSpyIPs;
+        private CheckBox checkBoxWin11DarkMode;
     }
 }
 

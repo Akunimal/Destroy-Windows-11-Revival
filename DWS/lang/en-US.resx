@@ -18,15 +18,6 @@
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
     There are any number of "resheader" rows that contain simple 
     name/value pairs.
     
@@ -182,6 +173,15 @@
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
     <value>EXPERT: block 2015 spy IPs via persistent routes</value>
+  </data>
+  <data name="checkBoxWin11DarkMode" xml:space="preserve">
+    <value>Windows 11 dark mode (Windows 11 only)</value>
+  </data>
+  <data name="btnBackupRegistry" xml:space="preserve">
+    <value>Backup registry now</value>
+  </data>
+  <data name="btnRestoreRegistryBackup" xml:space="preserve">
+    <value>Restore registry backup...</value>
   </data>
   <data name="Complete" xml:space="preserve">
     <value>Complete</value>

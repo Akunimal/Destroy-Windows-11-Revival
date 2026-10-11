@@ -18,15 +18,6 @@
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
     There are any number of "resheader" rows that contain simple 
     name/value pairs.
     
@@ -251,5 +242,41 @@
   </data>
   <data name="FindOffice16FileT" xml:space="preserve">
     <value>يرجى تحديد المسار لملف msosync.exe . إذا تم تثبيت Office 2016 على محرك الأقراص C، اضغط على "إلغاء"</value>
+  </data>
+  <data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+    <value>حذف Copilot و AI Hub و AI Provider</value>
+  </data>
+  <data name="checkBoxDeleteAppTeams" xml:space="preserve">
+    <value>حذف Microsoft Teams</value>
+  </data>
+  <data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+    <value>حذف Outlook الجديد لويندوز</value>
+  </data>
+  <data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+    <value>حذف Clipchamp</value>
+  </data>
+  <data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+    <value>حذف Widgets وتغذية الأخبار</value>
+  </data>
+  <data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+    <value>حذف PC Manager و Get Started و Feedback وما شابه</value>
+  </data>
+  <data name="checkBoxWin11Tweaks" xml:space="preserve">
+    <value>تعديلات Windows 11: Copilot و Recall و Widgets والإعلانات (سجل النظام)</value>
+  </data>
+  <data name="checkBoxDeleteSpyServices" xml:space="preserve">
+    <value>خبير: حذف خدمات القياس عن بُعد (وليس مجرد تعطيلها)</value>
+  </data>
+  <data name="checkBoxBlockSpyIPs" xml:space="preserve">
+    <value>خبير: حجب 2015 عنوان IP للتجسس عبر مسارات دائمة</value>
+  </data>
+  <data name="checkBoxWin11DarkMode" xml:space="preserve">
+    <value>الوضع الداكن لنظام Windows 11 (Windows 11 فقط)</value>
+  </data>
+  <data name="btnBackupRegistry" xml:space="preserve">
+    <value>إنشاء نسخة احتياطية لسجل النظام الآن</value>
+  </data>
+  <data name="btnRestoreRegistryBackup" xml:space="preserve">
+    <value>استعادة النسخة الاحتياطية لسجل النظام...</value>
   </data>
 </root>

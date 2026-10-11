@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -18,15 +18,6 @@
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
     There are any number of "resheader" rows that contain simple 
     name/value pairs.
     
@@ -237,5 +228,41 @@ Metro uygulamaları silmek gerçekten faydalı çünkü arkaplanda çalışarak 
   </data>
   <data name="FindOffice16FileT" xml:space="preserve">
     <value> msosync.exe yolunu belirtin. eğer Office 2016 standart olarak C'ye yüklü ise, "Cancel" a basın.</value>
+  </data>
+  <data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+    <value>Copilot, AI Hub ve AI Provider'ı sil</value>
+  </data>
+  <data name="checkBoxDeleteAppTeams" xml:space="preserve">
+    <value>Microsoft Teams'i sil</value>
+  </data>
+  <data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+    <value>Yeni Outlook for Windows'u sil</value>
+  </data>
+  <data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+    <value>Clipchamp'ı sil</value>
+  </data>
+  <data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+    <value>Widgets ve haber akışını sil</value>
+  </data>
+  <data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+    <value>PC Manager, Başlangıç, Geri Bildirim vb. uygulamalarını sil</value>
+  </data>
+  <data name="checkBoxWin11Tweaks" xml:space="preserve">
+    <value>Windows 11 ince ayarları: Copilot, Recall, Widgets, reklamlar (kayıt defteri)</value>
+  </data>
+  <data name="checkBoxDeleteSpyServices" xml:space="preserve">
+    <value>UZMAN: telemetri hizmetlerini sil (sadece devre dışı bırakmak yerine)</value>
+  </data>
+  <data name="checkBoxBlockSpyIPs" xml:space="preserve">
+    <value>UZMAN: 2015 casus IP adresini kalıcı rotalarla engelle</value>
+  </data>
+  <data name="checkBoxWin11DarkMode" xml:space="preserve">
+    <value>Windows 11 karanlık mod (yalnızca Windows 11)</value>
+  </data>
+  <data name="btnBackupRegistry" xml:space="preserve">
+    <value>Kayıt defterini şimdi yedekle</value>
+  </data>
+  <data name="btnRestoreRegistryBackup" xml:space="preserve">
+    <value>Kayıt defteri yedeğini geri yükle...</value>
   </data>
 </root>

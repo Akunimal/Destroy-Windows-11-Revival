@@ -18,15 +18,6 @@
 		<resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
 		<resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
 		<data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-		<data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-		<data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-				<value>[base64 mime encoded serialized .NET Framework object]</value>
-		</data>
-		<data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-				<value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-				<comment>This is a comment</comment>
-		</data>
-								
 		There are any number of "resheader" rows that contain simple 
 		name/value pairs.
 		
@@ -258,5 +249,41 @@ Zwróć uwagę na to, że parametrów /destroy i /deleteapp= nie można używać
 	</data>
 	<data name="btnFixRotateScreen" xml:space="preserve">
 		<value>Napraw funkcję obracania ekranu</value>
+	</data>
+	<data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+		<value>Usuń Copilot, AI Hub i AI Provider</value>
+	</data>
+	<data name="checkBoxDeleteAppTeams" xml:space="preserve">
+		<value>Usuń Microsoft Teams</value>
+	</data>
+	<data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+		<value>Usuń nową wersję Outlook dla Windows</value>
+	</data>
+	<data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+		<value>Usuń Clipchamp</value>
+	</data>
+	<data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+		<value>Usuń Widgets i kanał wiadomości</value>
+	</data>
+	<data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+		<value>Usuń PC Manager, Get Started, Feedback itp.</value>
+	</data>
+	<data name="checkBoxWin11Tweaks" xml:space="preserve">
+		<value>Tweaki Windows 11: Copilot, Recall, Widgets, reklamy (rejestr)</value>
+	</data>
+	<data name="checkBoxDeleteSpyServices" xml:space="preserve">
+		<value>EKSPERT: usuń usługi telemetrii (nie tylko wyłącz)</value>
+	</data>
+	<data name="checkBoxBlockSpyIPs" xml:space="preserve">
+		<value>EKSPERT: zablokuj 2015 szpiegowskich adresów IP trwałymi trasami</value>
+	</data>
+	<data name="checkBoxWin11DarkMode" xml:space="preserve">
+		<value>Tryb ciemny Windows 11 (tylko Windows 11)</value>
+	</data>
+	<data name="btnBackupRegistry" xml:space="preserve">
+		<value>Utwórz kopię zapasową rejestru</value>
+	</data>
+	<data name="btnRestoreRegistryBackup" xml:space="preserve">
+		<value>Przywróć kopię zapasową rejestru...</value>
 	</data>
 </root>

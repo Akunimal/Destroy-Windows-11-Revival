@@ -18,15 +18,6 @@
     <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
     <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
     <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
     There are any number of "resheader" rows that contain simple 
     name/value pairs.
     
@@ -257,5 +248,41 @@ Verwijder GWX</value>
   </data>
   <data name="checkBoxDeleteWindows78Updates" xml:space="preserve">
     <value>Verwijder spionage updates</value>
+  </data>
+  <data name="checkBoxDeleteAppCopilot" xml:space="preserve">
+    <value>Ištrinti „Copilot“, „AI Hub“ ir „AI Provider“</value>
+  </data>
+  <data name="checkBoxDeleteAppTeams" xml:space="preserve">
+    <value>Ištrinti „Microsoft Teams“</value>
+  </data>
+  <data name="checkBoxDeleteAppOutlook" xml:space="preserve">
+    <value>Ištrinti naują „Outlook for Windows“ programą</value>
+  </data>
+  <data name="checkBoxDeleteAppClipchamp" xml:space="preserve">
+    <value>Ištrinti „Clipchamp“</value>
+  </data>
+  <data name="checkBoxDeleteAppWidgets" xml:space="preserve">
+    <value>Ištrinti „Widgets“ ir naujienų skiltį</value>
+  </data>
+  <data name="checkBoxDeleteAppWin11Misc" xml:space="preserve">
+    <value>Ištrinti „PC Manager“, „Get Started“, „Feedback“ ir kt.</value>
+  </data>
+  <data name="checkBoxWin11Tweaks" xml:space="preserve">
+    <value>„Windows 11“ patobulinimai: „Copilot“, „Recall“, „Widgets“, reklamos (registre)</value>
+  </data>
+  <data name="checkBoxDeleteSpyServices" xml:space="preserve">
+    <value>Ekspertams: ištrinti telemetrijos paslaugas (ne tik jas išjungti)</value>
+  </data>
+  <data name="checkBoxBlockSpyIPs" xml:space="preserve">
+    <value>Ekspertams: blokuoti 2015 šnipinėjimo IP adresus per nuolatinius maršrutus</value>
+  </data>
+  <data name="checkBoxWin11DarkMode" xml:space="preserve">
+    <value>„Windows 11“ tamsusis režimas (tik „Windows 11“ sistemoms)</value>
+  </data>
+  <data name="btnBackupRegistry" xml:space="preserve">
+    <value>Padaryti registro atsarginę kopiją dabar</value>
+  </data>
+  <data name="btnRestoreRegistryBackup" xml:space="preserve">
+    <value>Atkurti registro atsarginę kopiją...</value>
   </data>
 </root>

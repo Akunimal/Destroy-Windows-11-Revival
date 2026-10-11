@@ -41,6 +41,16 @@ layers the Windows 11 support on top of it.
   Explorer on Windows 10/11).
 - **Safer by default.** The 2015 IP-blackhole list is expert-mode only, and the
   insecure in-app auto-update (which fetched source over plain HTTP) was removed.
+- **Windows 11 look.** Rounded window corners and a matching dark/light title bar via
+  the Windows 11 DWM APIs, plus a full Windows 11 light/dark colour palette and
+  modern typography. A *dark mode* toggle appears in the Utilities tab on Windows 11
+  only. Windows 10 and 7/8.1 keep the original look untouched.
+- **Reversible.** Every run snapshots the 55 registry values the tool changes into a
+  timestamped backup folder, which can be undone from *Restore registry backup...*.
+  The backup also includes plain `.reg` exports of the affected keys.
+- **Builds with modern tooling.** The project still targets .NET Framework 4.0, but
+  now restores its 4.0 targeting pack from NuGet, so it compiles with any recent
+  MSBuild / Visual Studio or on CI without installing the retired 4.0 SDK.
 
 ## Features (carried over from the original)
 
@@ -57,15 +67,46 @@ layers the Windows 11 support on top of it.
 
 ## Building
 
-Open `DWS_Lite.sln` in Visual Studio and build the `Release` configuration, or run
-MSBuild from a Visual Studio Developer Command Prompt:
+The easiest way is the included helper script, which only needs the .NET SDK:
 
 ```
-msbuild DWS_Lite.sln /p:Configuration=Release
+build.cmd
 ```
 
-The project is a classic (non-SDK) .NET Framework project, so it needs the .NET
-Framework build tools / targeting pack installed with Visual Studio.
+It runs the two steps below and drops the result in `DWS\bin\Release\DWS_Lite.exe`.
+
+Or run them by hand with any .NET SDK (any recent version — the SDK provides the
+Roslyn compiler and MSBuild):
+
+```
+dotnet msbuild DWS\DWS_Lite.sln /t:Restore
+dotnet msbuild DWS\DWS_Lite.sln /p:Configuration=Release
+```
+
+`DWS_Lite.sln` and the `DWS` project stay classic (non-SDK) .NET Framework projects,
+but they now reference the `Microsoft.NETFramework.ReferenceAssemblies.net40`
+NuGet package, which supplies the retired .NET Framework 4.0 targeting pack. That
+removes the old "MSB3644: reference assemblies for .NETFramework,Version=v4.0 were
+not found" problem without installing Visual Studio.
+
+Building in Visual Studio works too — open `DWS_Lite.sln`, pick `Release`, build.
+
+### Why .NET Framework 4.0?
+
+On purpose. .NET 4.0 is the newest version that still runs on Windows 7 RTM, so one
+binary covers Windows 7 SP0 through Windows 11. Windows 11 itself ships with 4.8 in
+place, so nothing needs to be installed there.
+
+Everything the code needs that is newer than .NET 4.0 is avoided: for example
+`Exception.HResult` (public only from .NET 4.5) is not used, and resources are kept
+string-only in the `.resx` files because the modern resource compiler demands
+`System.Resources.Extensions`, which only exists for .NET 4.6.2+. Images are embedded
+as files instead (`DWS\Resources\*.png`).
+
+### Continuous integration
+
+`.github/workflows/build.yml` builds the `win11` branch on `windows-latest` on every
+push and pull request, and uploads `DWS_Lite.exe` as an artifact.
 
 ## Credits & License
 

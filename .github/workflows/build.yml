@@ -1,0 +1,48 @@
+name: Build DWS 11
+
+on:
+  push:
+    branches: [win11]
+  pull_request:
+    branches: [win11]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Modern Roslyn/MSBuild. The .NET Framework 4.0 targeting pack comes from
+      # the Microsoft.NETFramework.ReferenceAssemblies.net40 NuGet package
+      # referenced by DWS/DWS_Lite.csproj, so nothing else needs installing.
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet msbuild DWS\DWS_Lite.csproj /t:Restore
+
+      - name: Build Release
+        run: dotnet msbuild DWS\DWS_Lite.csproj /p:Configuration=Release
+
+      - name: Show build result
+        shell: pwsh
+        run: |
+          $exe = "DWS\bin\Release\DWS_Lite.exe"
+          if (Test-Path $exe) {
+            Write-Host "Built: $exe"
+            (Get-Item $exe).VersionInfo.ProductVersion
+          } else {
+            Write-Error "DWS_Lite.exe was not produced."
+            exit 1
+          }
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: DWS-11-win-x64
+          path: DWS\bin\Release\DWS_Lite.exe
+          if-no-files-found: error
