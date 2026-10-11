@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Удалить все Win 10 Metro приложения</value>
+    <value>Удалить Metro-приложения</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Удалить One Drive</value>
@@ -124,13 +124,13 @@
     <value>Восстановить систему</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Добавить шпионские домены в hosts, и Windows Firewall</value>
+    <value>Добавить шпионские домены в hosts</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Создать точку восстановления системы</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Удалить Win 10 Metro приложения</value>
+    <value>Удалить Metro-приложения</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Отключить приватные настройки</value>
@@ -179,7 +179,7 @@
     <value>Информация</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>Некоторые METRO приложения удаляются навсегда, и их нельзя восстановить</value>
+    <value>METRO-приложения удаляются безвозвратно.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Ссылки</value>
@@ -272,21 +272,21 @@
     <value>Удалить PC Manager, Get Started, Feedback и др.</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Твики Windows 11: Copilot, Recall, Widgets, реклама (реестр)</value>
+    <value>Улучшения Win11: Copilot, Recall, Widgets, реклама</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>ЭКСПЕРТ: удалить службы телеметрии (не только отключить)</value>
+    <value>ЭКСПЕРТ: удалить службы телеметрии</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>ЭКСПЕРТ: заблокировать 2015 шпионских IP-адресов постоянными маршрутами</value>
+    <value>ЭКСПЕРТ: блокировать шпионские IP</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Тёмный режим Windows 11 (только Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Создать резервную копию реестра</value>
+    <value>Создать копию сейчас</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Восстановить резервную копию реестра...</value>
+    <value>Восстановить резервную копию...</value>
   </data>
 </root>

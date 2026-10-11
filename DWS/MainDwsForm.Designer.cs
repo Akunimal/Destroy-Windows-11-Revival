@@ -200,7 +200,7 @@ namespace DWS_Lite
             this.StatusCommandsLable.Name = "StatusCommandsLable";
             this.StatusCommandsLable.Size = new System.Drawing.Size(429, 22);
             this.StatusCommandsLable.TabIndex = 2;
-            this.StatusCommandsLable.Text = "Destroy Windows 10 Spying";
+            this.StatusCommandsLable.Text = "Destroy Windows 11 Spying";
             this.StatusCommandsLable.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // ProgressBarStatus
@@ -221,7 +221,7 @@ namespace DWS_Lite
             this.btnDestroyWindowsSpying.Name = "btnDestroyWindowsSpying";
             this.btnDestroyWindowsSpying.Size = new System.Drawing.Size(429, 50);
             this.btnDestroyWindowsSpying.TabIndex = 0;
-            this.btnDestroyWindowsSpying.Text = "Destroy Windows 10 Spying";
+            this.btnDestroyWindowsSpying.Text = "Destroy Windows 11 Spying";
             this.btnDestroyWindowsSpying.UseVisualStyleBackColor = false;
             this.btnDestroyWindowsSpying.Click += new System.EventHandler(this.btnDestroyWindowsSpying_Click);
             // 

@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Verwijder alle Metro apps (win10)</value>
+    <value>Verwijder Metro-apps</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Verwijder OneDrive</value>
@@ -124,13 +124,13 @@
     <value>Herstel Systeem</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Voeg spionage domeinen aan het Hosts bestand toe, en blokkeer in Windows Firewall</value>
+    <value>Voeg spionage-domeinen toe aan hosts-bestand</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Maak een herstelpunt aan.</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Verwijder Windows 10 Metro Apps</value>
+    <value>Verwijder Metro-apps</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Schakel privacy instellingen uit</value>
@@ -179,7 +179,7 @@ Nu opnieuw opstarten?</value>
     <value>Info</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>Metro apps worden permanent verwijderd, herstel is niet mogelijk.</value>
+    <value>METRO-apps worden permanent verwijderd.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Links</value>
@@ -268,21 +268,21 @@ Verwijder GWX</value>
     <value>PC Manager, Aan de slag, Feedback, enz. verwijderen</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Windows 11-tweaks: Copilot, Recall, Widgets, advertenties (register)</value>
+    <value>Win11-tweaks: Copilot, Recall, Widgets, ads</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>EXPERT: telemetrieservices verwijderen (niet alleen uitschakelen)</value>
+    <value>EXPERT: telemetriediensten verwijderen</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>EXPERT: 2015 spy-IP-adressen blokkeren via persistente routes</value>
+    <value>EXPERT: spy-IP's blokkeren</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Donkere modus voor Windows 11 (alleen Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Back-up van het register maken</value>
+    <value>Nu back-uppen</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Back-up van het register herstellen...</value>
+    <value>Backup herstellen...</value>
   </data>
 </root>

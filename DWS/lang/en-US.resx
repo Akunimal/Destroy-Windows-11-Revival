@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Delete all windows 10 metro apps</value>
+    <value>Delete Metro apps</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Delete One Drive</value>
@@ -124,13 +124,13 @@
     <value>Restore System</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Add spy domains to hosts file, and block in Windows Firewall</value>
+    <value>Add spy domains to hosts file</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Create system restore point</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Delete windows 10 metro apps</value>
+    <value>Delete Metro apps</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Disable private settings</value>
@@ -166,13 +166,13 @@
     <value>Delete PC Manager, Get Started, Feedback, etc.</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Windows 11 tweaks: Copilot, Recall, Widgets, ads (registry)</value>
+    <value>Win11 tweaks: Copilot, Recall, Widgets, ads</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>EXPERT: delete telemetry services (not just disable)</value>
+    <value>EXPERT: delete telemetry services</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>EXPERT: block 2015 spy IPs via persistent routes</value>
+    <value>EXPERT: block 2015 spy IPs</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Windows 11 dark mode (Windows 11 only)</value>
@@ -215,7 +215,7 @@ Restart now?</value>
     <value>Info</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>METRO applications are deleted permanently, without the possibility of recovery.</value>
+    <value>METRO apps are deleted permanently and cannot be recovered.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Links</value>

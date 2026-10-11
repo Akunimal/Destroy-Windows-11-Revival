@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Tüm Metro Uygulamalarını Sil</value>
+    <value>Metro uygulamalarını sil</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>One Drive'ı Sil</value>
@@ -124,13 +124,13 @@
     <value>Sistemi Geri Düzelt</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Casus Domainleri Hosts Dosyasına Ekle, ve Windows Firewallda Engelle</value>
+    <value>Casus alan adlarını hosts dosyasına ekle</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Sistem Geri Yükleme Noktası Oluştur</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Windows 10 Metro Uygulamalarını Sil</value>
+    <value>Metro uygulamalarını sil</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Özel Ayarları Devre Dışı Bırak</value>
@@ -176,7 +176,7 @@ Casus Uyguluamaları Devredışı Bırakmak İçin Yeniden Başlatma Gerekiyor.Y
     <value>Bilgi</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>Metro Uygulamaları Geri Dönüş Olmadan Tamamen Silindi.</value>
+    <value>METRO uygulamaları kalıcı olarak silinir.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Linkler</value>
@@ -248,21 +248,21 @@ Metro uygulamaları silmek gerçekten faydalı çünkü arkaplanda çalışarak 
     <value>PC Manager, Başlangıç, Geri Bildirim vb. uygulamalarını sil</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Windows 11 ince ayarları: Copilot, Recall, Widgets, reklamlar (kayıt defteri)</value>
+    <value>Win11 ince ayarları: Copilot, Recall, Widgets, reklamlar</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>UZMAN: telemetri hizmetlerini sil (sadece devre dışı bırakmak yerine)</value>
+    <value>UZMAN: telemetri hizmetlerini sil</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>UZMAN: 2015 casus IP adresini kalıcı rotalarla engelle</value>
+    <value>UZMAN: casus IP'leri engelle</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Windows 11 karanlık mod (yalnızca Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Kayıt defterini şimdi yedekle</value>
+    <value>Şimdi yedekle</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Kayıt defteri yedeğini geri yükle...</value>
+    <value>Yedeği geri yükle...</value>
   </data>
 </root>

@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Eliminar todas las apps Metro de Windows 10</value>
+    <value>Eliminar apps Metro</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Eliminar One Drive</value>
@@ -124,13 +124,13 @@
     <value>Restaurar sistema</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Añadir dominios espía al archivo Hosts, y bloquearlos en el Firewall de Windows</value>
+    <value>Añadir dominios espía al archivo Hosts</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Crear punto de restauración</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Eliminar Apps Metro de Windows 10</value>
+    <value>Eliminar apps Metro</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Deshabilitar configuración privada</value>
@@ -166,22 +166,22 @@
     <value>Eliminar PC Manager, Inicio, Comentarios, etc.</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Ajustes de Windows 11: Copilot, Recall, Widgets, anuncios (registro)</value>
+    <value>Ajustes de Win11: Copilot, Recall, Widgets, anuncios</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>EXPERTO: eliminar servicios de telemetría (no solo deshabilitar)</value>
+    <value>EXPERTO: eliminar servicios de telemetría</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>EXPERTO: bloquear IPs espías de 2015 con rutas persistentes</value>
+    <value>EXPERTO: bloquear IPs espías</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Modo oscuro de Windows 11 (solo Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Hacer copia del registro ahora</value>
+    <value>Hacer copia ahora</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Restaurar copia del registro...</value>
+    <value>Restaurar copia...</value>
   </data>
   <data name="Compele" xml:space="preserve">
     <value>Finalizado</value>
@@ -213,7 +213,7 @@ Un reinicio es necesario para deshabilitar todo el spyware. Reiniciar ahora?</va
     <value>Info</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>Las aplicaciones METRO son eliminadas permanentemente, sin posibilidad de recuperación.</value>
+    <value>Las apps METRO se borran de forma permanente y no se pueden recuperar.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Links</value>

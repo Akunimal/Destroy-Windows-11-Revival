@@ -109,7 +109,7 @@
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
 	<data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-		<value>Usuń wszystkie aplikacje Metro Windows 10</value>
+		<value>Usuń aplikacje Metro</value>
 	</data>
 	<data name="btnDeleteOneDrive" xml:space="preserve">
 		<value>Odinstaluj OneDrive</value>
@@ -124,13 +124,13 @@
 		<value>Przywracanie systemu</value>
 	</data>
 	<data name="checkBoxAddToHosts" xml:space="preserve">
-		<value>Zablokuj domeny szpiegujące w pliku hosts i Zaporze systemu Windows</value>
+		<value>Dodaj domeny szpiegowskie do pliku hosts</value>
 	</data>
 	<data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
 		<value>Utwórz punkt przywracania systemu</value>
 	</data>
 	<data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-		<value>Usuń aplikacje Metro Windows 10</value>
+		<value>Usuń aplikacje Metro</value>
 	</data>
 	<data name="checkBoxDisablePrivateSettings" xml:space="preserve">
 		<value>Wyłącz wysyłanie prywatnych danych</value>
@@ -178,7 +178,7 @@ Czy chcesz zrobić to teraz?</value>
 		<value>Informacja</value>
 	</data>
 	<data name="labelInfoDeleteMetroApps" xml:space="preserve">
-		<value>Aplikacje Metro zostaną usunięte na stałe i nie będzie możliwości ich przywrócenia.</value>
+		<value>Aplikacje METRO są usuwane bezpowrotnie.</value>
 	</data>
 	<data name="Links" xml:space="preserve">
 		<value>Linki</value>
@@ -269,21 +269,21 @@ Zwróć uwagę na to, że parametrów /destroy i /deleteapp= nie można używać
 		<value>Usuń PC Manager, Get Started, Feedback itp.</value>
 	</data>
 	<data name="checkBoxWin11Tweaks" xml:space="preserve">
-		<value>Tweaki Windows 11: Copilot, Recall, Widgets, reklamy (rejestr)</value>
+		<value>Poprawki Win11: Copilot, Recall, Widgets, reklamy</value>
 	</data>
 	<data name="checkBoxDeleteSpyServices" xml:space="preserve">
-		<value>EKSPERT: usuń usługi telemetrii (nie tylko wyłącz)</value>
+		<value>EXPERT: usuń usługi telemetrii</value>
 	</data>
 	<data name="checkBoxBlockSpyIPs" xml:space="preserve">
-		<value>EKSPERT: zablokuj 2015 szpiegowskich adresów IP trwałymi trasami</value>
+		<value>EXPERT: blokuj adresy IP szpiegowskie</value>
 	</data>
 	<data name="checkBoxWin11DarkMode" xml:space="preserve">
 		<value>Tryb ciemny Windows 11 (tylko Windows 11)</value>
 	</data>
 	<data name="btnBackupRegistry" xml:space="preserve">
-		<value>Utwórz kopię zapasową rejestru</value>
+		<value>Kopia zapasowa teraz</value>
 	</data>
 	<data name="btnRestoreRegistryBackup" xml:space="preserve">
-		<value>Przywróć kopię zapasową rejestru...</value>
+		<value>Przywróć kopię zapasową...</value>
 	</data>
 </root>

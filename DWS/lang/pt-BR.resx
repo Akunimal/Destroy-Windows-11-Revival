@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Eliminar todos os apps Metro do Windows 10</value>
+    <value>Excluir apps Metro</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Eliminar One Drive</value>
@@ -124,13 +124,13 @@
     <value>Restaurar sistema</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Adicionar domínios de espionagem no arquivo hosts e bloquear no Firewall do Windows</value>
+    <value>Adicionar domínios de espionagem ao arquivo hosts</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Criar ponto de restauração</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Eliminar Apps Metro do Windows 10</value>
+    <value>Excluir aplicativos Metro</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Desabilitar configuracões privadas</value>
@@ -179,7 +179,7 @@ Reiniciar agora?</value>
     <value>Info</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>Os aplicativos METRO são apagados permanentemente, sem a possibilidade de recuperação.</value>
+    <value>Os aplicativos METRO são apagados permanentemente.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Links</value>
@@ -258,21 +258,21 @@ IMPORTANT! Arguments /destroy and /deleteapp= can not be combined, and the argum
     <value>Excluir PC Manager, Get Started, Feedback, etc.</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Ajustes do Windows 11: Copilot, Recall, Widgets, anúncios (registro)</value>
+    <value>Ajustes do Win11: Copilot, Recall, Widgets, anúncios</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>ESPECIALISTA: excluir serviços de telemetria (não apenas desativar)</value>
+    <value>AVANÇADO: excluir serviços de telemetria</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>ESPECIALISTA: bloquear 2015 IPs de espionagem por rotas persistentes</value>
+    <value>AVANÇADO: bloquear IPs espiãs</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Modo escuro do Windows 11 (somente Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Fazer backup do registro agora</value>
+    <value>Fazer backup agora</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Restaurar backup do registro...</value>
+    <value>Restaurar backup...</value>
   </data>
 </root>

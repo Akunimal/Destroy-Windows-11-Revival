@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>删除所有 Windows 10 的 Metro 应用</value>
+    <value>删除 Metro 应用</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>删除 One Drive</value>
@@ -124,13 +124,13 @@
     <value>还原系统</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>添加监视域名到 HOSTS 文件，并在 Windows 防火墙中添加阻止规则</value>
+    <value>将监控域名添加到 hosts 文件</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>创建系统还原点</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>删除 Windows 10 的 Metro 应用</value>
+    <value>删除 Metro 应用</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>禁用隐私设置</value>
@@ -179,7 +179,7 @@
     <value>信息</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>METRO 应用将永久删除，无法恢复。</value>
+    <value>METRO 应用将被永久删除，无法恢复。</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>链接</value>
@@ -270,13 +270,13 @@
     <value>删除 PC Manager、Get Started、反馈等</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Windows 11 优化: Copilot、Recall、Widgets、广告 (注册表)</value>
+    <value>Win11 调整：Copilot、Recall、小组件、广告</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>专家: 删除遥测服务 (不只是禁用)</value>
+    <value>专家：删除遥测服务</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>专家: 通过持久路由阻止 2015 个间谍 IP</value>
+    <value>专家：阻止监控 IP</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Windows 11 深色模式 (仅限 Windows 11)</value>
@@ -285,6 +285,6 @@
     <value>立即备份注册表</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>还原注册表备份...</value>
+    <value>恢复注册表备份...</value>
   </data>
 </root>

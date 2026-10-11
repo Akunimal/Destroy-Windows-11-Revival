@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Smazat všechny metro aplikace Windows 10</value>
+    <value>Odstranit Metro aplikace</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Smazat One Drive</value>
@@ -124,13 +124,13 @@
     <value>Obnovit system</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Přidat spy domény do hosts souboru a blokovat ve Windows Firewall</value>
+    <value>Přidat špionážní domény do souboru hosts</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Vytvořit bod obnovení systému</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Smazat windows 10 metro aplikace</value>
+    <value>Odstranit aplikace Metro</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Zakázat v nastavení soukromí</value>
@@ -179,7 +179,7 @@ Restartovat nyní?</value>
     <value>Info</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>METRO aplikace budou odstraněny trvale, bez možnosti obnovy.</value>
+    <value>Aplikace METRO jsou trvale odstraněny a nelze je obnovit.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Odkazy</value>
@@ -258,21 +258,21 @@ DŮLEŽITÉ! Argumenty /destroy a /deleteapp= nelze kombinovat a argument /delet
     <value>Odstranit PC Manager, Get Started, Feedback atd.</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Vyladění Windows 11: Copilot, Recall, Widgets, reklamy (registr)</value>
+    <value>Vylepšení Win11: Copilot, Recall, Widgets, reklamy</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>ODBORNÍK: odstranit služby telemetrie (nejen je deaktivovat)</value>
+    <value>PRO POKROČILÉ: odstranit telemetrické služby</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>ODBORNÍK: blokovat 2015 špiónských IP adres pomocí trvalých tras</value>
+    <value>PRO POKROČILÉ: blokovat špionážní IP</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Tmavý režim Windows 11 (pouze Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Zálohovat registr nyní</value>
+    <value>Zálohovat nyní</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Obnovit zálohu registru...</value>
+    <value>Obnovit zálohu...</value>
   </data>
 </root>

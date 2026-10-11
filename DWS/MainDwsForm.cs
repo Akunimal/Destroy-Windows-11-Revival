@@ -44,7 +44,9 @@ namespace DWS_Lite
         // Windows 11 look: rounded corners, modern palette and font, static
         // accent border instead of the original animated rainbow border.
         private bool _win11ModernLook = true;
-        private bool _win11DarkTheme;
+        // Dark is the default look: the original flat light theme felt dated next to
+        // Windows 11's dark title bar, and the user asked for the app to open in dark.
+        private bool _win11DarkTheme = true;
 
         public MainDwsForm(string[] args)
         {
@@ -250,6 +252,7 @@ namespace DWS_Lite
 
                 // Dark mode is a UI preference, not a professional-only toggle.
                 checkBoxWin11DarkMode.Enabled = true;
+                checkBoxWin11DarkMode.Checked = _win11DarkTheme;
 
                 _OutPut($"Windows 11 look applied ({(_win11DarkTheme ? "dark" : "light")} palette).", LogLevel.Info);
             }
@@ -724,14 +727,14 @@ namespace DWS_Lite
                 return;
             if (start)
             {
-                StatusCommandsLable.Text = @"Destroy Windows 10 Spying";
+                StatusCommandsLable.Text = @"Destroy Windows 11 Spying";
                 StatusCommandsLable.ForeColor = Color.Black;
             }
             else
             {
                 if (_fatalErrors == 0)
                 {
-                    StatusCommandsLable.Text = $"Destroy Windows 10 Spying - {GetTranslateText("Complete")}!";
+                    StatusCommandsLable.Text = $"Destroy Windows 11 Spying - {GetTranslateText("Complete")}!";
                     StatusCommandsLable.ForeColor = Color.DarkGreen;
                     if (MessageBox.Show(GetTranslateText("CompleteMSG"), GetTranslateText("Info"),
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
@@ -740,7 +743,7 @@ namespace DWS_Lite
                 }
                 else
                 {
-                    StatusCommandsLable.Text = $"Destroy Windows 10 Spying - errors: {_fatalErrors}";
+                    StatusCommandsLable.Text = $"Destroy Windows 11 Spying - errors: {_fatalErrors}";
                     StatusCommandsLable.ForeColor = Color.Red;
                     try
                     {

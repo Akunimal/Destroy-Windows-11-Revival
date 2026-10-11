@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Alle Windows Store Apps entfernen</value>
+    <value>Metro-Apps löschen</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Microsoft OneDrive entfernen</value>
@@ -124,13 +124,13 @@
     <value>System wiederherstellen</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Automatisch Internetseiten, die spionieren, blockieren.</value>
+    <value>Spy-Domains zur Hosts-Datei hinzufügen</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Systemwiederherstellungspunkt erstellen</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Alle Windows Store Apps entfernen</value>
+    <value>Metro-Apps löschen</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Datenschutzeinstellungen deaktivieren</value>
@@ -181,7 +181,7 @@ Jetzt neu starten?</value>
     <value>Informationen</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>Windows Store Apps werden gelöscht. Diese Aktion ist nicht umkehrbar.</value>
+    <value>Metro-Apps werden endgültig gelöscht, Wiederherstellung unmöglich.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>Verweise</value>
@@ -260,21 +260,21 @@ Hinweise: Sie können /destroy und /deleteapp nicht gleichzeitig verwenden. Fern
     <value>PC Manager, Erste Schritte, Feedback usw. löschen</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Windows 11-Optimierungen: Copilot, Recall, Widgets, Werbung (Registrierung)</value>
+    <value>Win11-Optimierungen: Copilot, Recall, Widgets, Werbung</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>EXPERTE: Telemetriedienste löschen (nicht nur deaktivieren)</value>
+    <value>PROFI: Telemetriedienste löschen</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>EXPERTE: 2015 Spy-IPs über persistente Routen blockieren</value>
+    <value>PROFI: Spy-IPs blockieren</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Windows 11-Dunkelmodus (nur Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Registrierung jetzt sichern</value>
+    <value>Jetzt sichern</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Registrierungs-Backup wiederherstellen...</value>
+    <value>Backup wiederherstellen...</value>
   </data>
 </root>

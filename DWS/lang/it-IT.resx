@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>Cancellare tutti applicazioni Metro di Win 10</value>
+    <value>Elimina app Metro</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Cancellare One Drive</value>
@@ -124,13 +124,13 @@
     <value>Ripristinare il sistema</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>Aggiungere domini spia in hosts, Firewall</value>
+    <value>Aggiungi i domini spia al file hosts</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>Creare un punto di ripristino</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Cancellare tutti applicazioni Metro di Win 10</value>
+    <value>Elimina le app Metro</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>Disabilitare le impostazioni private</value>
@@ -179,7 +179,7 @@ Riavviare ora?</value>
     <value>Informazione</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>alcune applicazioni Metro vengono cacnellati definitivamente</value>
+    <value>Le app METRO vengono eliminate in modo permanente.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>collegamenti</value>
@@ -232,7 +232,7 @@ Al momento questo software è più efficace, ci lavora sopra  una vasta comunit�
 
 I commandi per la riga di comandi:
 /lang= - Impostare la lingua del programma, dopo = bisogna scrivere la lingua, ad esempio /lang=en-US
-/deleteapp= - Permette di cancellare le applicazioni Metro in Windows. Dopo = bisogna scrivere il nome o una sua parte, ad esempio  /deleteapp=bing или /deleteapp=note
+/deleteapp= - Permette di cancellare le applicazioni Metro in Windows. Dopo = bisogna scrivere il nome o una sua parte, ad esempio  /deleteapp=bing o /deleteapp=note
 /destroy - Il comando per la rimozione di spyware
 ATTENZIONE:I comandi /destroy e /deleteapp= non devono essere usati insieme, e il comando /deleteapp= non dev'essere usato più volte</value>
   </data>
@@ -258,21 +258,21 @@ ATTENZIONE:I comandi /destroy e /deleteapp= non devono essere usati insieme, e i
     <value>Elimina PC Manager, Get Started, Feedback, ecc.</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Ottimizzazioni di Windows 11: Copilot, Recall, Widgets, annunci (registro)</value>
+    <value>Ottimizzazioni Win11: Copilot, Recall, Widgets, annunci</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>ESPERTO: elimina i servizi di telemetria (non solo disattiva)</value>
+    <value>ESPERTO: elimina i servizi di telemetria</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>ESPERTO: blocca 2015 IP di spionaggio tramite percorsi persistenti</value>
+    <value>ESPERTO: blocca IP spia</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Modalità scura di Windows 11 (solo Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>Esegui backup del registro ora</value>
+    <value>Backup del registro ora</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>Ripristina backup del registro...</value>
+    <value>Ripristina backup...</value>
   </data>
 </root>

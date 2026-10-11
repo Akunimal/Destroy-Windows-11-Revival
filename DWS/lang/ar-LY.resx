@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>حذف كل تطبيقات ويندوز 10</value>
+    <value>حذف تطبيقات Metro</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>One Drive حذف </value>
@@ -124,13 +124,13 @@
     <value>استعادة النظام</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>إضافة نطاقات التجسس لملف هوست و حجبها بجدار وندوز  </value>
+    <value>إضافة نطاقات التجسس إلى ملف hosts</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>انشاء نقطة استعادة</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>حذف تطبيقات ويندوز 10</value>
+    <value>حذف تطبيقات Metro</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>تعطيل إعدادات الخصوصية</value>
@@ -180,7 +180,7 @@
     <value>معلومة</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>تطبيقات وندوز تحذف نهائيا و لا يمكن استرجاعها</value>
+    <value>تُحذف تطبيقات METRO نهائيًا ولا يمكن استعادتها.</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>روابط</value>
@@ -262,21 +262,21 @@
     <value>حذف PC Manager و Get Started و Feedback وما شابه</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>تعديلات Windows 11: Copilot و Recall و Widgets والإعلانات (سجل النظام)</value>
+    <value>تحسينات Win11: Copilot و Recall و Widgets والإعلانات</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>خبير: حذف خدمات القياس عن بُعد (وليس مجرد تعطيلها)</value>
+    <value>خبير: حذف خدمات القياس عن بعد</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>خبير: حجب 2015 عنوان IP للتجسس عبر مسارات دائمة</value>
+    <value>خبير: حظر عناوين IP التجسسية</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>الوضع الداكن لنظام Windows 11 (Windows 11 فقط)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>إنشاء نسخة احتياطية لسجل النظام الآن</value>
+    <value>نسخ احتياطي الآن</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>استعادة النسخة الاحتياطية لسجل النظام...</value>
+    <value>استعادة النسخة الاحتياطية...</value>
   </data>
 </root>

@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>全ての Windows 10 Metroアプリ削除</value>
+    <value>Metroアプリを削除</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>One Driveを削除</value>
@@ -124,13 +124,13 @@
     <value>システムを復元</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>スパイのドメインを hostsファイルに追加して、Windows Firewallに阻止規則を追加する</value>
+    <value>スパイドメインをhostsファイルに追加</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>システムの復元ポイントを作成する</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>Windows 10 Metroアプリを削除する</value>
+    <value>Metroアプリを削除</value>
   </data>
   <data name="checkBoxDisablePrivateSettings" xml:space="preserve">
     <value>プラーバシー設定を無効にする</value>
@@ -179,7 +179,7 @@
     <value>情報</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>Metroアプリを完全に削除します。 復元は出来なくなります。</value>
+    <value>METROアプリは完全に削除され、復元できません。</value>
   </data>
   <data name="Links" xml:space="preserve">
     <value>リンク</value>
@@ -270,21 +270,21 @@ DWSは現時点で一番効果的なプログラムです。DWSは開発中で�
     <value>PC Manager、Get Started、Feedback などを削除する</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>Windows 11 の微調整: Copilot、Recall、Widgets、広告 (レジストリ)</value>
+    <value>Win11調整: Copilot、Recall、ウィジェット、広告</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>上級者向け: テレメトリ サービスを削除する (無効化だけでなく)</value>
+    <value>上級者: テレメトリサービスを削除</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>上級者向け: 2015 個のスパイ IP を永続的なルートでブロックする</value>
+    <value>上級者: スパイIPを遮断</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>Windows 11 ダーク モード (Windows 11 のみ)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>今すぐレジストリをバックアップ</value>
+    <value>今すぐバックアップ</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>レジストリのバックアップを復元...</value>
+    <value>バックアップを復元...</value>
   </data>
 </root>

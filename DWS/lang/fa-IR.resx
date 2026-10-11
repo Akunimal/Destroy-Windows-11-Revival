@@ -109,7 +109,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
-    <value>پاکسازی تمامی اپلیکیشن ها ویندوز 10</value>
+    <value>حذف برنامه‌های Metro</value>
   </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>حذف وان درایو</value>
@@ -127,7 +127,7 @@
     <value>بازگردانی سیستم</value>
   </data>
   <data name="checkBoxAddToHosts" xml:space="preserve">
-    <value>اضافه کن , و در فایروال بلاک کن hosts دامنه های جاسوسی را به فایل</value>
+    <value>افزودن دامنه‌های جاسوسی به فایل hosts</value>
   </data>
   <data name="checkBoxCreateSystemRestorePoint" xml:space="preserve">
     <value>ایجاد نقطه بازگردانی</value>
@@ -136,7 +136,7 @@
     <value>GWX حذف</value>
   </data>
   <data name="checkBoxDeleteWindows10Apps" xml:space="preserve">
-    <value>حذف اپلیکیشن ویندوز 10</value>
+    <value>حذف برنامه‌های METRO</value>
   </data>
   <data name="checkBoxDeleteWindows78Updates" xml:space="preserve">
     <value>حذف آپدیت های جاسوسی</value>
@@ -189,7 +189,7 @@
     <value>اطلاعات</value>
   </data>
   <data name="labelInfoDeleteMetroApps" xml:space="preserve">
-    <value>اپلیکیشن ها تمامی حذف شدند بطور دائم , امکان بازگردانی وجود ندارد</value>
+    <value>برنامه‌های METRO به طور دائمی حذف می‌شوند.</value>
   </data>
   <data name="labelUninstallUpdates" xml:space="preserve">
     <value>حذف آپدیت ها:</value>
@@ -267,21 +267,21 @@ IMPORTANT! Arguments /destroy and /deleteapp= can not be combined, and the argum
     <value>حذف PC Manager، Get Started، Feedback و غیره</value>
   </data>
   <data name="checkBoxWin11Tweaks" xml:space="preserve">
-    <value>تنظیمات Windows 11: Copilot، Recall، Widgets، تبلیغات (رجیستری)</value>
+    <value>بهینه‌سازی Win11: Copilot، Recall، ویجت‌ها، تبلیغات</value>
   </data>
   <data name="checkBoxDeleteSpyServices" xml:space="preserve">
-    <value>متخصص: حذف سرویس‌های تلمتری (نه فقط غیرفعال کردن)</value>
+    <value>حرفه‌ای: حذف سرویس‌های تلمتری</value>
   </data>
   <data name="checkBoxBlockSpyIPs" xml:space="preserve">
-    <value>متخصص: مسدودسازی 2015 IP جاسوسی از طریق مسیرهای دائمی</value>
+    <value>حرفه‌ای: مسدود کردن IPهای جاسوسی</value>
   </data>
   <data name="checkBoxWin11DarkMode" xml:space="preserve">
     <value>حالت تاریک Windows 11 (فقط Windows 11)</value>
   </data>
   <data name="btnBackupRegistry" xml:space="preserve">
-    <value>پشتیبان‌گیری فوری از رجیستری</value>
+    <value>پشتیبان‌گیری اکنون</value>
   </data>
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
-    <value>بازیابی پشتیبان رجیستری...</value>
+    <value>بازیابی نسخه پشتیبان...</value>
   </data>
 </root>
