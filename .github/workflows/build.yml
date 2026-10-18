@@ -1,10 +1,8 @@
 name: Build DWS 11
 
+# Manual only: runs cost shared Actions minutes. Build locally; run this with
+# `gh workflow run build.yml` when a CI build is explicitly wanted.
 on:
-  push:
-    branches: [win11]
-  pull_request:
-    branches: [win11]
   workflow_dispatch:
 
 jobs:
