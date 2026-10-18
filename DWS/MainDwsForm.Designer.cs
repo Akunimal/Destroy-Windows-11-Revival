@@ -78,7 +78,7 @@ namespace DWS_Lite
             this.checkBoxDeleteSpyServices = new DWS_Lite.lib.ThemedCheckBox();
             this.checkBoxBlockSpyIPs = new DWS_Lite.lib.ThemedCheckBox();
             this.checkBoxWin11DarkMode = new DWS_Lite.lib.ThemedCheckBox();
-            this.btnProfessionalMode = new DWS_Lite.lib.ThemedCheckBox();
+            this.btnProfessionalMode = new DWS_Lite.lib.ToggleSwitch();
             this.tabPageUtilites = new System.Windows.Forms.TabPage();
             this.btnFixRotateScreen = new DWS_Lite.lib.ThemedButton();
             this.btnRemoveOldFirewallRules = new DWS_Lite.lib.ThemedButton();
@@ -1375,7 +1375,7 @@ namespace DWS_Lite
         private ComboBox comboBoxLanguageSelect;
         private DWS_Lite.lib.ThemedButton btnDestroyWindows78Spy;
         private RichTextBox ReadmeRichTextBox;
-        private DWS_Lite.lib.ThemedCheckBox btnProfessionalMode;
+        private DWS_Lite.lib.ToggleSwitch btnProfessionalMode;
         private DWS_Lite.lib.ThemedButton btnDisableOfficeUpdate;
         private Label CaptionWindow;
         private PictureBox _CloseButton;

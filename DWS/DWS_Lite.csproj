@@ -167,6 +167,7 @@
 <Compile Include="Lib\ThemedTabControl.cs" />
 <Compile Include="Lib\ThemedButton.cs" />
 <Compile Include="Lib\ThemedCheckBox.cs" />
+<Compile Include="Lib\ToggleSwitch.cs" />
     <Compile Include="Lib\RegistryBackup.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -476,6 +476,8 @@ namespace DWS_Lite.lib
                     check.BackColor = parent.BackColor;
                     var themedCheck = check as ThemedCheckBox;
                     if (themedCheck != null) themedCheck.Dark = dark;
+                    var toggle = check as ToggleSwitch;
+                    if (toggle != null) toggle.Dark = dark;
                     ApplyPalette(c, dark);
                     continue;
                 }

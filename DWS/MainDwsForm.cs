@@ -2178,6 +2178,161 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
             btnRemoveOldFirewallRules.Text = GetTranslateText("RemoveAllOldFirewallRules");
             btnBackupRegistry.Text = GetTranslateText("btnBackupRegistry");
             btnRestoreRegistryBackup.Text = GetTranslateText("btnRestoreRegistryBackup");
+            // Texts decide the column widths, so lay the settings out after translating.
+            LayoutSettingsTab();
+        }
+
+        private Size _baseClientSize;
+        private Size _baseSettingsPageSize;
+        private bool _layoutAnchorsSet;
+
+        /// <summary>
+        /// Windows 10/11 settings tab: professional-mode switch on top, options in two
+        /// columns (general / apps), and the window grown until every option fits, so
+        /// the list does not need to scroll. Windows 7/8.1 keep the original panel.
+        /// </summary>
+        private void LayoutSettingsTab()
+        {
+            if (!_win10) return;
+            try
+            {
+                if (_baseClientSize.IsEmpty)
+                {
+                    _baseClientSize = ClientSize;
+                    _baseSettingsPageSize = tabPageSettings.ClientSize;
+                }
+                SetResizeAnchors();
+
+                Control[] general =
+                {
+                    checkBoxCreateSystemRestorePoint, checkBoxKeyLoggerAndTelemetry, checkBoxAddToHosts,
+                    checkBoxDisablePrivateSettings, checkBoxDisableWindowsDefender, checkBoxSetDefaultPhoto,
+                    checkBoxSPYTasks, checkBoxWin11Tweaks, checkBoxDeleteSpyServices, checkBoxBlockSpyIPs,
+                    checkBoxWin11DarkMode
+                };
+                Control[] apps =
+                {
+                    checkBoxDeleteApp3d, checkBoxDeleteAppCamera, checkBoxDeleteMailCalendarMaps,
+                    checkBoxDeleteAppBing, checkBoxDeleteAppZune, checkBoxDeleteAppPeopleOneNote,
+                    checkBoxDeleteAppPhone, checkBoxDeleteAppPhotos, checkBoxDeleteAppSolit,
+                    checkBoxDeleteAppVoice, checkBoxDeleteAppXBOX, checkBoxDeleteAppCopilot,
+                    checkBoxDeleteAppTeams, checkBoxDeleteAppOutlook, checkBoxDeleteAppClipchamp,
+                    checkBoxDeleteAppWidgets, checkBoxDeleteAppWin11Misc
+                };
+
+                const int margin = 12;
+                const int indent = 22;
+                const int columnGap = 32;
+                const int rowGap = 6;
+                const int maxColumn = 420;
+
+                var panel = Win10SettingsPanel;
+                panel.SuspendLayout();
+
+                int rowHeight = 0;
+                foreach (var c in general) { c.AutoSize = true; rowHeight = Math.Max(rowHeight, c.PreferredSize.Height); }
+                foreach (var c in apps) { c.AutoSize = true; rowHeight = Math.Max(rowHeight, c.PreferredSize.Height); }
+                checkBoxDeleteWindows10Apps.AutoSize = true;
+                rowHeight += rowGap;
+
+                // Column 1: general options. The dark-mode switch exists on Windows 11 only.
+                int x = margin, y = margin, colGeneral = 0;
+                foreach (var c in general)
+                {
+                    if (c == checkBoxWin11DarkMode && !_win11) continue;
+                    c.Location = new Point(x, y);
+                    colGeneral = Math.Max(colGeneral, c.PreferredSize.Width);
+                    y += rowHeight;
+                }
+                int bottom = y;
+                colGeneral = Math.Min(colGeneral, maxColumn);
+
+                // Column 2: the "delete apps" master switch, its apps indented under it, then the warning.
+                int x2 = x + colGeneral + columnGap;
+                y = margin;
+                checkBoxDeleteWindows10Apps.Location = new Point(x2, y);
+                int colApps = checkBoxDeleteWindows10Apps.PreferredSize.Width;
+                y += rowHeight;
+                foreach (var c in apps)
+                {
+                    c.Location = new Point(x2 + indent, y);
+                    colApps = Math.Max(colApps, indent + c.PreferredSize.Width);
+                    y += rowHeight;
+                }
+                colApps = Math.Min(colApps, maxColumn);
+                labelInfoDeleteMetroApps.AutoSize = true;
+                labelInfoDeleteMetroApps.MaximumSize = new Size(colApps, 0);
+                labelInfoDeleteMetroApps.Location = new Point(x2, y + rowGap);
+                bottom = Math.Max(bottom, labelInfoDeleteMetroApps.Bottom);
+
+                // Professional-mode switch on top of the tab, above the options.
+                btnProfessionalMode.Location = new Point(margin, margin);
+                btnProfessionalMode.BringToFront();
+
+                panel.AutoScroll = false;
+                panel.Location = new Point(0, btnProfessionalMode.Bottom + margin / 2);
+                panel.Size = new Size(x2 + colApps + margin, bottom + margin);
+                panel.ResumeLayout();
+
+                // Grow the window by what the settings page is short of; never below the original size.
+                int needW = Math.Max(_baseSettingsPageSize.Width, panel.Right + margin);
+                int needH = Math.Max(_baseSettingsPageSize.Height, panel.Bottom + margin);
+                var target = new Size(_baseClientSize.Width + needW - _baseSettingsPageSize.Width,
+                    _baseClientSize.Height + needH - _baseSettingsPageSize.Height);
+
+                // Small screens: cap the height and let the option list scroll again.
+                var work = Screen.FromControl(this).WorkingArea;
+                if (target.Height > work.Height - 40)
+                {
+                    int over = target.Height - (work.Height - 40);
+                    target.Height -= over;
+                    panel.Height -= over;
+                    panel.AutoScroll = true;
+                }
+                ClientSize = target;
+
+                // After the window is on screen a language change can grow it: keep it visible.
+                if (Visible)
+                {
+                    Left = Math.Max(work.Left, Math.Min(Left, work.Right - Width));
+                    Top = Math.Max(work.Top, Math.Min(Top, work.Bottom - Height));
+                }
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"Settings layout failed: {ex.Message}", LogLevel.Error);
+            }
+        }
+
+        /// <summary>
+        /// The designer places everything at fixed coordinates for a 453 px window. Anchor
+        /// the containers and stretchy controls once so they follow the new window size.
+        /// </summary>
+        private void SetResizeAnchors()
+        {
+            if (_layoutAnchorsSet) return;
+            _layoutAnchorsSet = true;
+
+            const AnchorStyles all = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            const AnchorStyles topWide = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+            FormTabsControl.Anchor = all;
+            CaptionWindow.Anchor = topWide;
+            MinimizeButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            _CloseButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            BorderUP.Anchor = topWide;
+            BorderDown.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            BorderLeft.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left;
+            BorderR.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
+
+            btnDestroyWindowsSpying.Anchor = topWide;
+            ProgressBarStatus.Anchor = topWide;
+            StatusCommandsLable.Anchor = topWide;
+            LogOutputTextBox.Anchor = all;
+            groupBoxLanguage.Anchor = topWide;
+            labelMoonInfo.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            textBox1.Anchor = all;
+            linkLabelSourceCode.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         }
 
         private string GetTranslateText(string name)
