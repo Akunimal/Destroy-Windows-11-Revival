@@ -275,6 +275,8 @@ namespace DWS_Lite
                 Diag(string.Format("tabs.Back after={0:X8}", FormTabsControl.BackColor.ToArgb()));
 
                 ProgressBarStatus.ApplyWin11Look(_win11DarkTheme);
+                ApplyTextScrollbars(_win11DarkTheme);
+                BackColor = Win11Visual.SurfaceColor(_win11DarkTheme);
 
                 OutPutThemeDiagnostics();
                 _OutPut($"Windows 11 look applied ({(_win11DarkTheme ? "dark" : "light")} palette).", LogLevel.Info);
@@ -298,8 +300,17 @@ namespace DWS_Lite
             CaptionWindow.BackColor = Win11Visual.CaptionBackColor(dark);
             FormTabsControl.BackColor = Win11Visual.SurfaceColor(dark);
             ProgressBarStatus.ApplyWin11Look(dark);
+            ApplyTextScrollbars(dark);
+            BackColor = Win11Visual.SurfaceColor(dark);
             OutPutThemeDiagnostics();
             _OutPut($"Windows 11 dark theme {(dark ? "enabled" : "disabled")}.", LogLevel.Info);
+        }
+
+        private void ApplyTextScrollbars(bool dark)
+        {
+            Win11Visual.ApplyScrollbarTheme(LogOutputTextBox, dark);
+            Win11Visual.ApplyScrollbarTheme(ReadmeRichTextBox, dark);
+            Win11Visual.ApplyScrollbarTheme(textBox1, dark);
         }
 
         private void Diag(string message)
@@ -332,8 +343,7 @@ namespace DWS_Lite
                 sb.Append(" changelog.Font=").Append(textBox1.Font.Name);
                 sb.Append(" link.Link=").Append(Hex(linkLabelSourceCode.LinkColor));
                 sb.Append(" langCombo.Back=").Append(Hex(comboBoxLanguageSelect.BackColor));
-                sb.Append(" moonInfo=").Append(labelMoonInfo.Location);
-                _OutPut(sb.ToString(), LogLevel.Info);
+                sb.Append(" moonInfo=").Append(labelMoonInfo.Location);                _OutPut(sb.ToString(), LogLevel.Info);
             }
             catch (Exception ex)
             {
@@ -1826,28 +1836,28 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
         {
             _closeButtonState = 2;
             _CloseButton.Refresh();
-            _CloseButton.BackColor = Color.Azure;
+            _CloseButton.BackColor = CaptionHoverColor(true);
         }
 
         private void CloseButton_MouseLeave(object sender, EventArgs e)
         {
             _closeButtonState = 0;
             _CloseButton.Refresh();
-            _CloseButton.BackColor = Color.White;
+            _CloseButton.BackColor = CaptionIdleColor();
         }
 
         private void MinimizeButton_MouseEnter(object sender, EventArgs e)
         {
             _minimizeButtonState = 2;
             MinimizeButton.Refresh();
-            MinimizeButton.BackColor = Color.Azure;
+            MinimizeButton.BackColor = CaptionHoverColor(false);
         }
 
         private void MinimizeButton_MouseLeave(object sender, EventArgs e)
         {
             _minimizeButtonState = 0;
             MinimizeButton.Refresh();
-            MinimizeButton.BackColor = Color.White;
+            MinimizeButton.BackColor = CaptionIdleColor();
         }
 
         private void MinimizeButton_Paint(object sender, PaintEventArgs e)
@@ -1855,7 +1865,8 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
             var myCurrentPaint = _minimizeButtonState == 0
                 ? Resources.minimize
                 : _minimizeButtonState == 1 ? Resources.minimize1 : Resources.minimize2;
-            e.Graphics.DrawImage(myCurrentPaint, MinimizeButton.Width - Resources.minimize.Width - 5,
+            DrawCaptionGlyph(e, myCurrentPaint, MinimizeButton.BackColor,
+                MinimizeButton.Width - Resources.minimize.Width - 5,
                 MinimizeButton.Height - Resources.minimize.Height - 7);
         }
 
@@ -1864,14 +1875,74 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
             var myCurrentPaint = _closeButtonState == 0
                 ? Resources.close
                 : _closeButtonState == 1 ? Resources.close1 : Resources.close2;
-            e.Graphics.DrawImage(myCurrentPaint, _CloseButton.Width - Resources.close.Width - 5,
+            DrawCaptionGlyph(e, myCurrentPaint, _CloseButton.BackColor,
+                _CloseButton.Width - Resources.close.Width - 5,
                 _CloseButton.Height - Resources.close.Height - 7);
         }
 
         private void CaptionWindow_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.FillEllipse(new SolidBrush(Color.WhiteSmoke), 3,3,23,23);
+            // The light badge disappears on the dark strip, so the icon sits on it directly.
+            if (!CaptionDark)
+            {
+                e.Graphics.FillEllipse(new SolidBrush(Color.WhiteSmoke), 3,3,23,23);
+            }
             e.Graphics.DrawImage(Icon.ToBitmap(), 6, 5, 19, 19);
+        }
+
+        private bool CaptionDark
+        {
+            get { return _win11 && _win11ModernLook && _win11DarkTheme; }
+        }
+
+        /// <summary>Caption button colour when the pointer is not over it.</summary>
+        private Color CaptionIdleColor()
+        {
+            return CaptionDark ? Win11Visual.CaptionBackColor(true) : Color.White;
+        }
+
+        /// <summary>Caption button colour under the pointer; close turns red as on Windows 11.</summary>
+        private Color CaptionHoverColor(bool close)
+        {
+            if (!CaptionDark) return Color.Azure;
+            return close ? Color.FromArgb(196, 43, 28) : Color.FromArgb(58, 58, 58);
+        }
+
+        /// <summary>
+        /// Draws a caption glyph. The PNGs carry an opaque white plate, which shows as
+        /// a bright block on the dark strip, so on dark the plate is made transparent
+        /// and the glyph is redrawn light over the button colour.
+        /// </summary>
+        private void DrawCaptionGlyph(PaintEventArgs e, Image glyph, Color fill, int x, int y)
+        {
+            if (!CaptionDark)
+            {
+                e.Graphics.DrawImage(glyph, x, y);
+                return;
+            }
+
+            var rect = new Rectangle(x, y, glyph.Width, glyph.Height);
+            using (var brush = new SolidBrush(fill))
+            {
+                e.Graphics.FillRectangle(brush, rect);
+            }
+
+            // Output is white; alpha is 1 minus the mean of the source RGB, so white
+            // plate -> transparent and dark glyph -> opaque light glyph.
+            var matrix = new System.Drawing.Imaging.ColorMatrix(new float[][]
+            {
+                new float[] { 0, 0, 0, -1f / 3f, 0 },
+                new float[] { 0, 0, 0, -1f / 3f, 0 },
+                new float[] { 0, 0, 0, -1f / 3f, 0 },
+                new float[] { 0, 0, 0, 0, 0 },
+                new float[] { 1, 1, 1, 1, 1 },
+            });
+            using (var attributes = new System.Drawing.Imaging.ImageAttributes())
+            {
+                attributes.SetColorMatrix(matrix);
+                e.Graphics.DrawImage(glyph, rect, 0, 0, glyph.Width, glyph.Height,
+                    GraphicsUnit.Pixel, attributes);
+            }
         }
 
         private void ChangeBorderColor(Color cl)

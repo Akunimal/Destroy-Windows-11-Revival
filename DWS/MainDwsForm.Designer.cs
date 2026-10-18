@@ -184,6 +184,7 @@ namespace DWS_Lite
             this.LogOutputTextBox.Location = new System.Drawing.Point(8, 113);
             this.LogOutputTextBox.Name = "LogOutputTextBox";
             this.LogOutputTextBox.ReadOnly = true;
+            this.LogOutputTextBox.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.LogOutputTextBox.Size = new System.Drawing.Size(429, 279);
             this.LogOutputTextBox.TabIndex = 3;
             this.LogOutputTextBox.Text = "";

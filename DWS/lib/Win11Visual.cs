@@ -31,6 +31,27 @@ namespace DWS_Lite.lib
         private const int DWMWCP_ROUND = 2;
         private const int DWMWCP_SQUARE = 0;
 
+        [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
+        private static extern int SetWindowTheme(IntPtr hwnd, string subAppName, string subIdList);
+
+        /// <summary>
+        /// Switch the native scroll bars of a text control to the dark Explorer theme
+        /// (or back to the light one). Without it the classic scroll bar stays light.
+        /// </summary>
+        public static void ApplyScrollbarTheme(Control control, bool dark)
+        {
+            if (control == null || !control.IsHandleCreated) return;
+            try
+            {
+                SetWindowTheme(control.Handle, dark ? "DarkMode_Explorer" : "Explorer", null);
+            }
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch (Exception)
+            {
+            }
+        }
+
+
         [DllImport("dwmapi.dll", PreserveSig = true)]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
@@ -47,11 +68,17 @@ namespace DWS_Lite.lib
         public static readonly Color DarkSurface = Color.FromArgb(32, 32, 32);      // #202020
         public static readonly Color DarkContent = Color.FromArgb(43, 43, 43);      // #2B2B2B
         public static readonly Color DarkText = Color.FromArgb(255, 255, 255);
-        public static readonly Color DarkTextSecondary = Color.FromArgb(201, 201, 201);
-        public static readonly Color DarkButton = Color.FromArgb(46, 46, 46);      // #2E2E2E
-        public static readonly Color DarkButtonBorder = Color.FromArgb(93, 93, 93);
+        // Dark tokens follow the Windows 11 dark theme (surface #202020, layer #2B2B2B,
+        // control fill #373737, text #FFFFFF / #C5C5C5). Borders are #767676 (3:1 on
+        // #2B2B2B, WCAG 1.4.11); disabled text is #9A9A9A (5:1 on #2B2B2B).
+        public static readonly Color DarkTextSecondary = Color.FromArgb(197, 197, 197); // #C5C5C5
+        public static readonly Color DarkTextDisabled = Color.FromArgb(154, 154, 154);  // #9A9A9A
+        public static readonly Color DarkButton = Color.FromArgb(55, 55, 55);      // #373737
+        public static readonly Color DarkButtonBorder = Color.FromArgb(118, 118, 118); // #767676
+        public static readonly Color DarkCheckBorder = Color.FromArgb(138, 138, 138);  // #8A8A8A
+        public static readonly Color DarkCheckDisabledBorder = Color.FromArgb(90, 90, 90); // #5A5A5A
         public static readonly Color DarkField = Color.FromArgb(43, 43, 43);
-        public static readonly Color DarkFieldBorder = Color.FromArgb(93, 93, 93);
+        public static readonly Color DarkFieldBorder = Color.FromArgb(118, 118, 118); // #767676
         // A barely-lighter grey so an input reads as a field without a border.
         // TextBox/ComboBox borders are painted by the OS and stay light even when
         // BackColor/ForeColor are dark, so on dark we drop the border and use this.
@@ -59,7 +86,7 @@ namespace DWS_Lite.lib
 
         public static readonly Color AccentLight = Color.FromArgb(0, 103, 192);    // #0067C0
         public static readonly Color AccentOnLight = Color.FromArgb(255, 255, 255);
-        public static readonly Color AccentDark = Color.FromArgb(76, 194, 255);    // #4CC2FF
+        public static readonly Color AccentDark = Color.FromArgb(96, 205, 255);    // #60CDFF
         public static readonly Color AccentOnDark = Color.FromArgb(0, 0, 0);
 
         /// <summary>Title-bar / window accent source (used for the border).</summary>
@@ -356,6 +383,7 @@ namespace DWS_Lite.lib
                 if (check != null)
                 {
                     check.ForeColor = text;
+                    check.BackColor = parent.BackColor;
                     ApplyPalette(c, dark);
                     continue;
                 }

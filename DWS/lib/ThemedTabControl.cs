@@ -5,45 +5,56 @@ using System.Windows.Forms;
 namespace DWS_Lite.lib
 {
     /// <summary>
-    /// TabControl whose tab strip background follows BackColor.
+    /// TabControl that paints its whole surface in BackColor.
     ///
-    /// Under the Windows visual style the strip area that no tab covers (the space
-    /// after the last tab) is painted in the system colour and ignores BackColor.
-    /// The Paint event does not help here: it is only raised when UserPaint is set,
-    /// and setting UserPaint stops the base control from drawing its tabs. So the
-    /// remainder of the strip is filled right after the native WM_PAINT has drawn the
-    /// strip and the owner-drawn tabs, excluding the tab rectangles themselves.
+    /// The Windows visual style paints the tab strip, the 3px frame around the page
+    /// area and the gap after the last tab in the system colour, and it does so after
+    /// any fill done in WM_PAINT, so those pixels stayed light. With UserPaint set the
+    /// native painting is skipped: the control fills its client area, then raises the
+    /// owner-draw tab callbacks itself. The tab pages are child windows and paint
+    /// themselves on top.
     /// </summary>
     internal class ThemedTabControl : TabControl
     {
-        private const int WM_PAINT = 0x000F;
+        private Color _backColor = SystemColors.Control;
 
-        protected override void WndProc(ref Message m)
+        public ThemedTabControl()
         {
-            base.WndProc(ref m);
-            if (m.Msg == WM_PAINT) PaintStripRemainder();
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
         }
 
-        private void PaintStripRemainder()
+        /// <summary>
+        /// The base TabControl ignores BackColor assignments (it stays SystemColors.Control),
+        /// which is what painted the light frame. The value is kept here and used in OnPaint.
+        /// </summary>
+        public override Color BackColor
         {
-            if (TabCount == 0 || Width <= 0) return;
-
-            // DisplayRectangle starts below the strip, so everything above it is strip.
-            var strip = new Rectangle(0, 0, Width, DisplayRectangle.Top);
-            if (strip.Height <= 0) return;
-
-            using (var region = new Region(strip))
+            get { return _backColor; }
+            set
             {
-                for (int i = 0; i < TabCount; i++)
-                {
-                    region.Exclude(GetTabRect(i));
-                }
+                _backColor = value;
+                Invalidate();
+            }
+        }
 
-                using (var g = Graphics.FromHwnd(Handle))
-                using (var brush = new SolidBrush(BackColor))
-                {
-                    g.FillRegion(brush, region);
-                }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // Everything is painted in OnPaint.
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            if (ClientRectangle.Width <= 0 || ClientRectangle.Height <= 0) return;
+
+            using (var brush = new SolidBrush(BackColor))
+            {
+                g.FillRectangle(brush, ClientRectangle);
+            }
+
+            for (int i = 0; i < TabCount; i++)
+            {
+                OnDrawItem(new DrawItemEventArgs(g, Font, GetTabRect(i), i, DrawItemState.None));
             }
         }
     }
