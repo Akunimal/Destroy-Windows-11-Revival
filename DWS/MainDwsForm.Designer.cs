@@ -374,7 +374,7 @@ namespace DWS_Lite
             this.Win10SettingsPanel.Controls.Add(this.checkBoxDeleteSpyServices);
             this.Win10SettingsPanel.Controls.Add(this.checkBoxBlockSpyIPs);
             this.Win10SettingsPanel.Controls.Add(this.checkBoxWin11DarkMode);
-            this.Win10SettingsPanel.Location = new System.Drawing.Point(6, 3);
+            this.Win10SettingsPanel.Location = new System.Drawing.Point(6, 30);
             this.Win10SettingsPanel.Margin = new System.Windows.Forms.Padding(0);
             this.Win10SettingsPanel.Name = "Win10SettingsPanel";
             this.Win10SettingsPanel.AutoScroll = true;
@@ -816,9 +816,9 @@ namespace DWS_Lite
             // 
             this.btnProfessionalMode.AutoSize = true;
             this.btnProfessionalMode.ForeColor = System.Drawing.Color.Red;
-            this.btnProfessionalMode.Location = new System.Drawing.Point(6, 371);
+            this.btnProfessionalMode.Location = new System.Drawing.Point(6, 4);
             this.btnProfessionalMode.Name = "btnProfessionalMode";
-            this.btnProfessionalMode.Size = new System.Drawing.Size(113, 17);
+            this.btnProfessionalMode.Size = new System.Drawing.Size(300, 20);
             this.btnProfessionalMode.TabIndex = 21;
             this.btnProfessionalMode.Text = "Professional mode";
             this.btnProfessionalMode.UseVisualStyleBackColor = true;
