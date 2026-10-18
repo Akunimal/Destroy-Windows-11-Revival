@@ -96,12 +96,9 @@ namespace DWS_Lite
             this.btnRestoreSystem = new System.Windows.Forms.Button();
             this.btnDeleteAllWindows10Apps = new System.Windows.Forms.Button();
             this.tabPageAbout = new System.Windows.Forms.TabPage();
-            this.label2 = new System.Windows.Forms.Label();
-            this.linkLabel2 = new System.Windows.Forms.LinkLabel();
             this.label1 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.linkLabelSourceCode = new System.Windows.Forms.LinkLabel();
-            this.linkLabel1 = new System.Windows.Forms.LinkLabel();
             this.groupBoxLanguage = new System.Windows.Forms.GroupBox();
             this.comboBoxLanguageSelect = new System.Windows.Forms.ComboBox();
             this.labelMoonInfo = new System.Windows.Forms.Label();
@@ -1038,12 +1035,9 @@ namespace DWS_Lite
             // 
             this.tabPageAbout.BackColor = System.Drawing.Color.White;
             this.tabPageAbout.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.tabPageAbout.Controls.Add(this.label2);
-            this.tabPageAbout.Controls.Add(this.linkLabel2);
             this.tabPageAbout.Controls.Add(this.label1);
             this.tabPageAbout.Controls.Add(this.textBox1);
             this.tabPageAbout.Controls.Add(this.linkLabelSourceCode);
-            this.tabPageAbout.Controls.Add(this.linkLabel1);
             this.tabPageAbout.Controls.Add(this.groupBoxLanguage);
             this.tabPageAbout.Controls.Add(this.labelMoonInfo);
             this.tabPageAbout.Location = new System.Drawing.Point(4, 22);
@@ -1055,7 +1049,7 @@ namespace DWS_Lite
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(14, 78);
+            this.label1.Location = new System.Drawing.Point(14, 82);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(64, 13);
             this.label1.TabIndex = 14;
@@ -1063,27 +1057,38 @@ namespace DWS_Lite
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(14, 97);
+            this.textBox1.Location = new System.Drawing.Point(14, 100);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(417, 258);
+            this.textBox1.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.textBox1.Size = new System.Drawing.Size(417, 254);
             this.textBox1.TabIndex = 13;
-            this.textBox1.Text = "2.0 DWS 11 - Windows 11 edition\r\n+ Windows 11 detection (build >= 22000)\r\n+ exact" +
-    " package IDs for app removal (all users + provisioned)\r\n+ Copilot/Teams/Outlook/C" +
-    "lipchamp/Widgets removal\r\n+ Windows 11 registry tweaks (Copilot, Recall, Widgets," +
-    " ads)\r\n+ telemetry services disabled by default (delete = expert only)\r\n+ updat" +
-    "ed 2025 hosts blocklist, firewall never touched\r\n- removed insecure HTTP auto-up" +
-    "date\r\n\r\n1.6 Build 722 Support Windows Redstone\r\n- VS 2015 code style\r\n+ add new " +
-    "spying tasks\r\n+ add new spying hosts\r\n\r\n1.6 Build 717 rollup\r\n- Add Persian Lan" +
-    "guage\r\n- Fix Some things";
+            // Monospace with every bullet indented two spaces so the versions line up.
+            this.textBox1.Text = "2.0   DWS 11 - Windows 11 edition\r\n" +
+    "  + Windows 11 detection (build >= 22000)\r\n" +
+    "  + exact package IDs for app removal (all users + provisioned)\r\n" +
+    "  + Copilot/Teams/Outlook/Clipchamp/Widgets removal\r\n" +
+    "  + Windows 11 registry tweaks (Copilot, Recall, Widgets, ads)\r\n" +
+    "  + telemetry services disabled by default (delete = expert only)\r\n" +
+    "  + updated 2025 hosts blocklist, firewall never touched\r\n" +
+    "  - removed insecure HTTP auto-update\r\n" +
+    "\r\n" +
+    "1.6   Build 722 - Support Windows Redstone\r\n" +
+    "  - VS 2015 code style\r\n" +
+    "  + add new spying tasks\r\n" +
+    "  + add new spying hosts\r\n" +
+    "\r\n" +
+    "1.6   Build 717 - rollup\r\n" +
+    "  - Add Persian Language\r\n" +
+    "  - Fix Some things";
             // 
             // linkLabelSourceCode
             // 
             this.linkLabelSourceCode.AutoSize = true;
             this.linkLabelSourceCode.BackColor = System.Drawing.Color.Transparent;
             this.linkLabelSourceCode.LinkColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.linkLabelSourceCode.Location = new System.Drawing.Point(82, 380);
+            this.linkLabelSourceCode.Location = new System.Drawing.Point(14, 380);
             this.linkLabelSourceCode.Name = "linkLabelSourceCode";
             this.linkLabelSourceCode.Size = new System.Drawing.Size(116, 13);
             this.linkLabelSourceCode.TabIndex = 8;
@@ -1097,7 +1102,7 @@ namespace DWS_Lite
             this.groupBoxLanguage.Controls.Add(this.comboBoxLanguageSelect);
             this.groupBoxLanguage.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.groupBoxLanguage.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.groupBoxLanguage.Location = new System.Drawing.Point(8, 13);
+            this.groupBoxLanguage.Location = new System.Drawing.Point(8, 22);
             this.groupBoxLanguage.Name = "groupBoxLanguage";
             this.groupBoxLanguage.Size = new System.Drawing.Size(429, 54);
             this.groupBoxLanguage.TabIndex = 12;
@@ -1137,14 +1142,14 @@ namespace DWS_Lite
             // labelMoonInfo
             // 
             this.labelMoonInfo.BackColor = System.Drawing.Color.Transparent;
-            this.labelMoonInfo.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.labelMoonInfo.Font = new System.Drawing.Font("Tahoma", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.labelMoonInfo.ForeColor = System.Drawing.Color.White;
             this.labelMoonInfo.Location = new System.Drawing.Point(173, 0);
             this.labelMoonInfo.Name = "labelMoonInfo";
-            this.labelMoonInfo.Size = new System.Drawing.Size(272, 33);
+            this.labelMoonInfo.Size = new System.Drawing.Size(272, 18);
             this.labelMoonInfo.TabIndex = 6;
             this.labelMoonInfo.Text = "Сделано на другой стороне луны ®";
-            this.labelMoonInfo.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            this.labelMoonInfo.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // tabPageReadMe
             // 
@@ -1354,7 +1359,6 @@ namespace DWS_Lite
         private Button btnDisableWindowsUpdate;
         private Button btnEnableWindowsUpdate;
         private Button btnOpenAndEditHosts;
-        private LinkLabel linkLabel1;
         private Label labelMoonInfo;
         private GroupBox groupBoxWindowsUpdate;
         private GroupBox groupBoxUACEdit;
@@ -1391,8 +1395,6 @@ namespace DWS_Lite
         private Button btnFixRotateScreen;
         private Label label1;
         private TextBox textBox1;
-        private LinkLabel linkLabel2;
-        private Label label2;
         private CheckBox checkBoxDeleteAppCopilot;
         private CheckBox checkBoxDeleteAppTeams;
         private CheckBox checkBoxDeleteAppOutlook;

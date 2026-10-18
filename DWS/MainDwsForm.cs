@@ -240,9 +240,14 @@ namespace DWS_Lite
 
             try
             {
-                Win11Visual.ApplyWin11Chrome(this, _buildNumber, _win11DarkTheme);
+                Win11Visual.ApplyWin11Chrome(this, _buildNumber, _win11DarkTheme, Diag);
                 Win11Visual.ApplyModernFont(this, Win11Visual.ModernFontFamily());
                 Win11Visual.ApplyPalette(this, _win11DarkTheme);
+
+                // The change log is aligned by hand and the designer sets Consolas,
+                // but the modern-font pass just walked over it with a proportional
+                // face, which is what made the version blocks read unevenly.
+                textBox1.Font = new Font("Consolas", 8.25F, FontStyle.Regular, GraphicsUnit.Point);
 
                 // The original 1px picture-box borders clash with rounded corners.
                 BorderUP.Visible = false;
@@ -254,6 +259,22 @@ namespace DWS_Lite
                 checkBoxWin11DarkMode.Enabled = true;
                 checkBoxWin11DarkMode.Checked = _win11DarkTheme;
 
+                // The caption buttons are custom-drawn over the title bar; the close
+                // button ships with an opaque white BackColor in the designer, which
+                // shows up as a bright block at the right end of a dark title bar.
+                _CloseButton.BackColor = Win11Visual.CaptionBackColor(_win11DarkTheme);
+                MinimizeButton.BackColor = Win11Visual.CaptionBackColor(_win11DarkTheme);
+                CaptionWindow.BackColor = Win11Visual.CaptionBackColor(_win11DarkTheme);
+
+                // Belt and braces: the strip is owner-drawn, but the TabControl also
+                // fills its own background with BackColor before raising Paint, so it
+                // has to carry the dark surface as well.
+                var wanted = Win11Visual.SurfaceColor(_win11DarkTheme);
+                Diag(string.Format("tabs.Back before={0:X8} wanted={1:X8}", FormTabsControl.BackColor.ToArgb(), wanted.ToArgb()));
+                FormTabsControl.BackColor = wanted;
+                Diag(string.Format("tabs.Back after={0:X8}", FormTabsControl.BackColor.ToArgb()));
+
+                OutPutThemeDiagnostics();
                 _OutPut($"Windows 11 look applied ({(_win11DarkTheme ? "dark" : "light")} palette).", LogLevel.Info);
             }
             catch (Exception ex)
@@ -268,9 +289,53 @@ namespace DWS_Lite
             _win11DarkTheme = dark;
             if (!_win11 || !_win11ModernLook) return;
 
-            Win11Visual.ApplyWin11Chrome(this, _buildNumber, dark);
+            Win11Visual.ApplyWin11Chrome(this, _buildNumber, dark, Diag);
             Win11Visual.ApplyPalette(this, dark);
+            _CloseButton.BackColor = Win11Visual.CaptionBackColor(dark);
+            MinimizeButton.BackColor = Win11Visual.CaptionBackColor(dark);
+            CaptionWindow.BackColor = Win11Visual.CaptionBackColor(dark);
+            FormTabsControl.BackColor = Win11Visual.SurfaceColor(dark);
+            OutPutThemeDiagnostics();
             _OutPut($"Windows 11 dark theme {(dark ? "enabled" : "disabled")}.", LogLevel.Info);
+        }
+
+        private void Diag(string message)
+        {
+            _OutPut(message, LogLevel.Info);
+        }
+
+        private static string Hex(Color c)
+        {
+            return c.A.ToString("X2") + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
+        }
+
+        /// <summary>
+        /// Dump the runtime state of every control that has to be themed by hand.
+        /// The frame colour attributes are write-only on current Windows 11 builds,
+        /// so DwmGetWindowAttribute cannot confirm them; this is the only way to see
+        /// whether the palette actually reached the controls in question.
+        /// </summary>
+        private void OutPutThemeDiagnostics()
+        {
+            try
+            {
+                var sb = new System.Text.StringBuilder();
+                sb.Append("theme diag: tabs.DrawMode=").Append(FormTabsControl.DrawMode);
+                sb.Append(" tabs.Back=").Append(Hex(FormTabsControl.BackColor));
+                sb.Append(" caption.Back=").Append(Hex(CaptionWindow.BackColor));
+                sb.Append(" close.Back=").Append(Hex(_CloseButton.BackColor));
+                sb.Append(" minimize.Back=").Append(Hex(MinimizeButton.BackColor));
+                sb.Append(" changelog.Border=").Append(textBox1.BorderStyle);
+                sb.Append(" changelog.Font=").Append(textBox1.Font.Name);
+                sb.Append(" link.Link=").Append(Hex(linkLabelSourceCode.LinkColor));
+                sb.Append(" langCombo.Back=").Append(Hex(comboBoxLanguageSelect.BackColor));
+                sb.Append(" moonInfo=").Append(labelMoonInfo.Location);
+                _OutPut(sb.ToString(), LogLevel.Info);
+            }
+            catch (Exception ex)
+            {
+                _OutPut("theme diag failed: " + ex.Message, LogLevel.Error);
+            }
         }
 
         private void checkBoxWin11DarkMode_CheckedChanged(object sender, EventArgs e)
