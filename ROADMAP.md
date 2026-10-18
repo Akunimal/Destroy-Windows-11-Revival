@@ -67,6 +67,11 @@ build is **done**, **compiles clean** (0 errors, 0 warnings) and is committed on
       corners) and is untouched on older systems.
 - [x] Windows 10 / 7 / 8.1 keep the original look exactly — nothing is applied
       there.
+- [x] **Dark theme completed**: DWM frame/caption/text colours, owner-drawn tab
+      strip, borderless dark fields, themed combo drop-downs, caption strip as the
+      visible title bar, and the change log in Consolas (commit `96cbf52`).
+- [x] **Owner-drawn progress bar** (`DWS/lib/ModernProgressBar.cs`): thin accent
+      track on Windows 11 only. Stock `ProgressBar` everywhere else.
 
 ### Icon
 
@@ -116,6 +121,8 @@ build is **done**, **compiles clean** (0 errors, 0 warnings) and is committed on
 - [x] The 12 new Windows 11 / backup strings are now translated in **all 17 language
       files** (was en-US + es-ES only). The pre-existing
       `GetTranslateText()` fallback to en-US is still in place as a safety net.
+- [x] `lang/lt-LT.resx` is Lithuanian throughout: the legacy Dutch entries were
+      replaced in `1154398`.
 
 ---
 
@@ -144,16 +151,10 @@ build is **done**, **compiles clean** (0 errors, 0 warnings) and is committed on
 
 - [ ] The settings panel scrolls (`AutoScroll`) because of the extra Windows 11
       options. A cleaner two-column or grouped layout would suit more items better.
-- [ ] Restyle the progress bar and the scan progress area to finish the Windows 11
-      pass.
 
 ### Content
 
 - [ ] Review and refresh the hosts blocklist over time (2025-era is current).
-- [ ] **`lt-LT.resx` contains Dutch, not Lithuanian** (pre-existing upstream bug:
-      e.g. `Verwijder OneDrive`, `tabPageUtilites` = `Extra functies`). The 12 new
-      strings were added in proper Lithuanian, so the file is currently mixed — a
-      full Lithuanian re-translation of the legacy entries is a good follow-up.
 
 ---
 

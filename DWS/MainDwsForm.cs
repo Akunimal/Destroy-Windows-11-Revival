@@ -274,6 +274,8 @@ namespace DWS_Lite
                 FormTabsControl.BackColor = wanted;
                 Diag(string.Format("tabs.Back after={0:X8}", FormTabsControl.BackColor.ToArgb()));
 
+                ProgressBarStatus.ApplyWin11Look(_win11DarkTheme);
+
                 OutPutThemeDiagnostics();
                 _OutPut($"Windows 11 look applied ({(_win11DarkTheme ? "dark" : "light")} palette).", LogLevel.Info);
             }
@@ -295,6 +297,7 @@ namespace DWS_Lite
             MinimizeButton.BackColor = Win11Visual.CaptionBackColor(dark);
             CaptionWindow.BackColor = Win11Visual.CaptionBackColor(dark);
             FormTabsControl.BackColor = Win11Visual.SurfaceColor(dark);
+            ProgressBarStatus.ApplyWin11Look(dark);
             OutPutThemeDiagnostics();
             _OutPut($"Windows 11 dark theme {(dark ? "enabled" : "disabled")}.", LogLevel.Info);
         }

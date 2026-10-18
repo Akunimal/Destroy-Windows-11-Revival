@@ -163,6 +163,7 @@
     <Compile Include="Lib\WindowsUtil.cs" />
     <Compile Include="Lib\Win11Apps.cs" />
     <Compile Include="Lib\Win11Visual.cs" />
+<Compile Include="Lib\ModernProgressBar.cs" />
     <Compile Include="Lib\RegistryBackup.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

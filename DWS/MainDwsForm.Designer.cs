@@ -36,7 +36,7 @@ namespace DWS_Lite
             this.btnDestroyWindows78Spy = new System.Windows.Forms.Button();
             this.LogOutputTextBox = new System.Windows.Forms.RichTextBox();
             this.StatusCommandsLable = new System.Windows.Forms.Label();
-            this.ProgressBarStatus = new System.Windows.Forms.ProgressBar();
+            this.ProgressBarStatus = new DWS_Lite.lib.ModernProgressBar();
             this.btnDestroyWindowsSpying = new System.Windows.Forms.Button();
             this.tabPageSettings = new System.Windows.Forms.TabPage();
             this.Windows78Panel = new System.Windows.Forms.Panel();
@@ -1329,7 +1329,7 @@ namespace DWS_Lite
         private TabPage tabPageSettings;
         private TabPage tabPageUtilites;
         private TabPage tabPageAbout;
-        private ProgressBar ProgressBarStatus;
+        private DWS_Lite.lib.ModernProgressBar ProgressBarStatus;
         private Button btnDestroyWindowsSpying;
         private Label StatusCommandsLable;
         private RichTextBox LogOutputTextBox;
