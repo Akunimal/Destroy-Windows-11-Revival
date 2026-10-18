@@ -34,6 +34,33 @@ namespace DWS_Lite.lib
         [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
         private static extern int SetWindowTheme(IntPtr hwnd, string subAppName, string subIdList);
 
+        // Undocumented uxtheme ordinals (Windows 10 1809+). SetPreferredAppMode arrived
+        // in 1903 (ordinal 135); on 1809 ordinal 135 was AllowDarkModeForApp(BOOL). This
+        // app targets Windows 11, where SetPreferredAppMode(int) is correct.
+        [DllImport("uxtheme.dll", EntryPoint = "#135", CharSet = CharSet.Unicode)]
+        private static extern int SetPreferredAppMode(int preferredAppMode);
+
+        [DllImport("uxtheme.dll", EntryPoint = "#136", CharSet = CharSet.Unicode)]
+        private static extern void FlushMenuThemes();
+
+        /// <summary>
+        /// Opt the process into dark mode so native scroll bars honour DarkMode_Explorer.
+        /// Call once after Application.EnableVisualStyles. No-op before Windows 10 1809.
+        /// </summary>
+        public static void EnableDarkModeForApp()
+        {
+            try
+            {
+                if (Environment.OSVersion.Version.Build < 17763) return;
+                SetPreferredAppMode(2); // ForceDark
+                FlushMenuThemes();
+            }
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch (Exception)
+            {
+            }
+        }
+
         /// <summary>
         /// Switch the native scroll bars of a text control to the dark Explorer theme
         /// (or back to the light one). Without it the classic scroll bar stays light.
@@ -84,10 +111,41 @@ namespace DWS_Lite.lib
         // BackColor/ForeColor are dark, so on dark we drop the border and use this.
         public static readonly Color DarkFieldFill = Color.FromArgb(51, 51, 51); // #333333
 
-        public static readonly Color AccentLight = Color.FromArgb(0, 103, 192);    // #0067C0
+        // Accent follows the Windows colour setting (Settings > Colours > Accent colour).
+        // Defaults are used when the palette is not readable.
+        public static Color AccentLight = Color.FromArgb(0, 120, 215);    // #0078D7
         public static readonly Color AccentOnLight = Color.FromArgb(255, 255, 255);
-        public static readonly Color AccentDark = Color.FromArgb(96, 205, 255);    // #60CDFF
+        public static Color AccentDark = Color.FromArgb(96, 205, 255);    // #60CDFF
         public static readonly Color AccentOnDark = Color.FromArgb(0, 0, 0);
+
+        static Win11Visual()
+        {
+            LoadSystemAccent();
+        }
+
+        /// <summary>
+        /// Reads HKCU\...\Explorer\Accent\AccentPalette: eight RGBA entries from light to dark.
+        /// Entry 3 is the base accent (#0078D7 by default); entry 1 is the light accent used
+        /// on dark surfaces, which is what Windows 11 Settings uses in dark mode.
+        /// </summary>
+        private static void LoadSystemAccent()
+        {
+            try
+            {
+                using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Accent"))
+                {
+                    var palette = key == null ? null : key.GetValue("AccentPalette") as byte[];
+                    if (palette == null || palette.Length < 32) return;
+
+                    AccentLight = Color.FromArgb(palette[12], palette[13], palette[14]);
+                    AccentDark = Color.FromArgb(palette[4], palette[5], palette[6]);
+                }
+            }
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch (Exception)
+            {
+            }
+        }
 
         /// <summary>Title-bar / window accent source (used for the border).</summary>
         public static Color Accent(bool dark)
@@ -189,6 +247,46 @@ namespace DWS_Lite.lib
             }
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MARGINS
+        {
+            public int Left;
+            public int Right;
+            public int Top;
+            public int Bottom;
+        }
+
+        [DllImport("dwmapi.dll", PreserveSig = true)]
+        private static extern int DwmExtendFrameIntoClientArea(IntPtr hwnd, ref MARGINS margins);
+
+        /// <summary>True while the Mica backdrop is on: container surfaces paint MicaKey, which the form makes transparent.</summary>
+        public static bool MicaActive;
+        /// <summary>Colour keyed out as transparent so the Mica backdrop shows through.</summary>
+        public static readonly Color MicaKey = Color.FromArgb(1, 0, 1);
+
+        private const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
+        private const int DWMSBT_MAINWINDOW = 2; // Mica
+
+        /// <summary>
+        /// Mica backdrop (Windows 11 22H2+), as in WinForms.Fluent: extend the frame into
+        /// the client area, then set DWMWA_SYSTEMBACKDROP_TYPE to DWMSBT_MAINWINDOW.
+        /// Mica only shows where the client paints nothing.
+        /// </summary>
+        public static void ApplyMica(Form form, int buildNumber, bool dark)
+        {
+            if (form == null || buildNumber < 22621) return;
+            try
+            {
+                var margins = new MARGINS { Left = -1, Right = -1, Top = -1, Bottom = -1 };
+                DwmExtendFrameIntoClientArea(form.Handle, ref margins);
+                SetDwm(form.Handle, DWMWA_SYSTEMBACKDROP_TYPE, DWMSBT_MAINWINDOW);
+            }
+            // ReSharper disable once EmptyGeneralCatchClause
+            catch (Exception)
+            {
+            }
+        }
+
         /// <summary>Restore squared corners (classic look).</summary>
         public static void ApplySquareCorners(Form form, int buildNumber, Action<string> log)
         {
@@ -208,12 +306,6 @@ namespace DWS_Lite.lib
             var n = b.Name ?? string.Empty;
             return n.IndexOf("Destroy", StringComparison.OrdinalIgnoreCase) >= 0
                 || n.IndexOf("Confirm", StringComparison.OrdinalIgnoreCase) >= 0;
-        }
-
-        private static bool IsDangerButton(Button b)
-        {
-            var n = b.Name ?? string.Empty;
-            return n.IndexOf("Disable", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         /// <summary>
@@ -263,19 +355,17 @@ namespace DWS_Lite.lib
                 if (btn != null)
                 {
                     btn.FlatStyle = FlatStyle.Flat;
-                    btn.FlatAppearance.BorderColor = buttonBorder;
+                    // Flat Metro look: dark buttons get no visible outline, the fill carries them.
+                    btn.FlatAppearance.BorderColor = dark ? DarkButton : buttonBorder;
                     btn.FlatAppearance.BorderSize = 1;
                     btn.UseVisualStyleBackColor = false;
+                    var themedBtn = btn as ThemedButton;
+                    if (themedBtn != null) themedBtn.Dark = dark;
                     if (IsPrimaryButton(btn))
                     {
                         btn.BackColor = dark ? AccentDark : AccentLight;
                         btn.ForeColor = dark ? AccentOnDark : AccentOnLight;
                         btn.FlatAppearance.BorderColor = dark ? AccentDark : AccentLight;
-                    }
-                    else if (IsDangerButton(btn))
-                    {
-                        btn.BackColor = Color.FromArgb(196, 43, 28);
-                        btn.ForeColor = Color.White;
                     }
                     else
                     {
@@ -289,7 +379,7 @@ namespace DWS_Lite.lib
                 var tab = c as TabControl;
                 if (tab != null)
                 {
-                    tab.BackColor = surface;
+                    tab.BackColor = MicaActive ? MicaKey : surface;
                     tab.ForeColor = text;
                     // The tab strip is painted by the OS visual style and ignores
                     // BackColor, which is why it stayed light next to a dark body.
@@ -304,7 +394,7 @@ namespace DWS_Lite.lib
                 var tabPage = c as TabPage;
                 if (tabPage != null)
                 {
-                    tabPage.BackColor = content;
+                    tabPage.BackColor = MicaActive ? MicaKey : content;
                     tabPage.ForeColor = text;
                     ApplyPalette(c, dark);
                     continue;
@@ -314,7 +404,7 @@ namespace DWS_Lite.lib
                 if (panel != null)
                 {
                     // Content panels that hold controls use the content colour.
-                    panel.BackColor = content;
+                    panel.BackColor = MicaActive ? MicaKey : content;
                     panel.ForeColor = text;
                     ApplyPalette(c, dark);
                     continue;
@@ -323,7 +413,7 @@ namespace DWS_Lite.lib
                 var group = c as GroupBox;
                 if (group != null)
                 {
-                    group.BackColor = surface;
+                    group.BackColor = MicaActive ? MicaKey : surface;
                     group.ForeColor = text;
                     ApplyPalette(c, dark);
                     continue;
@@ -384,6 +474,8 @@ namespace DWS_Lite.lib
                 {
                     check.ForeColor = text;
                     check.BackColor = parent.BackColor;
+                    var themedCheck = check as ThemedCheckBox;
+                    if (themedCheck != null) themedCheck.Dark = dark;
                     ApplyPalette(c, dark);
                     continue;
                 }
@@ -442,7 +534,9 @@ namespace DWS_Lite.lib
 
                     var size = c.Font.Size;
                     var style = c.Font.Style;
-                    c.Font = new Font(family, size <= 0 ? 9f : size, style);
+                    // Body text never below 10 pt; larger headings keep their size.
+                    float body = size <= 0 ? 10f : Math.Max(size, 10f);
+                    c.Font = new Font(family, body, style);
                 }
                 // ReSharper disable once EmptyGeneralCatchClause
                 catch (Exception)

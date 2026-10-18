@@ -289,4 +289,7 @@
   <data name="btnRestoreRegistryBackup" xml:space="preserve">
     <value>Восстановить резервную копию...</value>
   </data>
+  <data name="labelMoonInfo" xml:space="preserve">
+    <value>Сделано на другой стороне луны ®</value>
+  </data>
 </root>

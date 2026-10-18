@@ -13,6 +13,8 @@ namespace DWS_Lite
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            // Opt into dark mode so native scroll bars render dark (Windows 11).
+            DWS_Lite.lib.Win11Visual.EnableDarkModeForApp();
             Application.Run(new MainDwsForm(args));
         }
     }

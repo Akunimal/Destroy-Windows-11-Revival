@@ -258,19 +258,30 @@ Restart now?</value>
     <value>Report a bug</value>
   </data>
   <data name="ReadMeTextBox" xml:space="preserve">
-    <value>This program destroys spying on Windows 7/8/8.1/10.
-The program is open source code, which is on github.
-This program completely destroys spying. Removes some elements of telemetry and the other turns off, disables Windows Defender, Cortana, and much more. As the program disables Windows Update, which allows you to remain anonymous and not to receive updates of new spyware.
-The delete Metro applications is very good, because they work in the background, and devour memory, and some of them spying on you.
-Also, the program blocks many IP address of Microsoft, which are the data, and adds the most spyware to hosts.
-Almost all of the program is irreversible and should not be rolled back even after a system restore point.
-At the moment it is the most effective program. The program is developing and improving a large community of users of Windows 10, some help to rewrite the code to a more productive, and some help with the translation of the program into other languages.
+    <value>DWS 11 (Destroy Windows 11 Spying) removes spying and telemetry from Windows 11. It also runs on Windows 7, 8/8.1 and 10.
 
-Arguments for the command line:
-/lang= - set the language of the program starts. Example: /lang=en
-/deleteapp= - allows you to delete an application Metro in Windows. Example: /deleteapp=bing or /deleteapp=note
-/destroy - an argument for removing spyware.
-IMPORTANT! Arguments /destroy and /deleteapp= can not be combined, and the argument /deleteapp= can not be used several times.</value>
+What it does:
+- Detects your Windows version. Windows 11 has its own options panel.
+- Disables telemetry services. It does not delete them by default; deleting them is an expert option.
+- Disables spying scheduled tasks.
+- Blocks telemetry domains in the HOSTS file. The Windows firewall is never touched.
+- Removes Metro/UWP apps by exact package name, for all users and provisioned copies. On Windows 11: Copilot, Teams, the new Outlook, Clipchamp, Widgets and more.
+- Applies Windows 11 registry settings: Copilot, Recall, Widgets, and Start/Explorer ads.
+- Windows 11 dark theme that follows the system accent colour.
+
+A registry backup (55 values) is saved before every run. Restore it with "Restaurar copia..." or make one now with "Hacer copia ahora".
+
+WARNING: removing Metro apps is permanent and cannot be undone. Some changes are not reverted by the registry backup alone. Create a system restore point before running the program.
+
+Compared with the original version, the HTTP auto-update and the firewall rules for explorer.exe and WSearch were removed, because they broke the Store, Windows Update and Explorer.
+
+Credits: original project Destroy-Windows-10-Spying. This version: https://github.com/Akunimal/Destroy-Windows-11-Revival
+
+Command-line arguments:
+/lang= - program language. Example: /lang=en
+/deleteapp= - removes one Metro app from Windows. Example: /deleteapp=bing or /deleteapp=note
+/destroy - runs the spyware removal.
+IMPORTANT: /destroy and /deleteapp= cannot be combined, and /deleteapp= cannot be repeated.</value>
   </data>
   <data name="FindOffice16FileT" xml:space="preserve">
     <value>Please specify the path to the file msosync.exe. If Office 2016 is installed as standard on the drive C, press "Cancel"</value>
@@ -286,5 +297,8 @@ IMPORTANT! Arguments /destroy and /deleteapp= can not be combined, and the argum
   </data>
   <data name="btnFixRotateScreen" xml:space="preserve">
     <value>Fix screen rotate</value>
+  </data>
+  <data name="labelMoonInfo" xml:space="preserve">
+    <value>Recovered from the other side of the moon ®</value>
   </data>
 </root>

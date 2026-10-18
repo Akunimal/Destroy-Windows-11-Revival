@@ -57,6 +57,11 @@ namespace DWS_Lite
             RecreateLogFile(LogFileName);
             // Check windows version
             CheckWindowsVersion();
+            // Bigger window and text on Windows 11 only; Windows 7/8/10 keep the original size.
+            if (_win11)
+            {
+                Scale(new SizeF(1.25f, 1.25f));
+            }
             // Windows 11 visual integration (rounded corners, dark title bar,
             // modern palette + font). No-op on Windows 10 and older.
             ApplyWindows11Look();
@@ -241,6 +246,10 @@ namespace DWS_Lite
             try
             {
                 Win11Visual.ApplyWin11Chrome(this, _buildNumber, _win11DarkTheme, Diag);
+                // Mica is left off in the client area: the TransparencyKey trick that
+                // showed it bled a black fringe around antialiased text. The window keeps
+                // a solid dark surface.
+                Win11Visual.MicaActive = false;
                 Win11Visual.ApplyModernFont(this, Win11Visual.ModernFontFamily());
                 Win11Visual.ApplyPalette(this, _win11DarkTheme);
 
@@ -276,7 +285,7 @@ namespace DWS_Lite
 
                 ProgressBarStatus.ApplyWin11Look(_win11DarkTheme);
                 ApplyTextScrollbars(_win11DarkTheme);
-                BackColor = Win11Visual.SurfaceColor(_win11DarkTheme);
+                BackColor = Win11Visual.MicaActive ? Win11Visual.MicaKey : Win11Visual.SurfaceColor(_win11DarkTheme);
 
                 OutPutThemeDiagnostics();
                 _OutPut($"Windows 11 look applied ({(_win11DarkTheme ? "dark" : "light")} palette).", LogLevel.Info);
@@ -298,10 +307,10 @@ namespace DWS_Lite
             _CloseButton.BackColor = Win11Visual.CaptionBackColor(dark);
             MinimizeButton.BackColor = Win11Visual.CaptionBackColor(dark);
             CaptionWindow.BackColor = Win11Visual.CaptionBackColor(dark);
-            FormTabsControl.BackColor = Win11Visual.SurfaceColor(dark);
+            FormTabsControl.BackColor = Win11Visual.MicaActive ? Win11Visual.MicaKey : Win11Visual.SurfaceColor(dark);
             ProgressBarStatus.ApplyWin11Look(dark);
             ApplyTextScrollbars(dark);
-            BackColor = Win11Visual.SurfaceColor(dark);
+            BackColor = Win11Visual.MicaActive ? Win11Visual.MicaKey : Win11Visual.SurfaceColor(dark);
             OutPutThemeDiagnostics();
             _OutPut($"Windows 11 dark theme {(dark ? "enabled" : "disabled")}.", LogLevel.Info);
         }
@@ -311,6 +320,8 @@ namespace DWS_Lite
             Win11Visual.ApplyScrollbarTheme(LogOutputTextBox, dark);
             Win11Visual.ApplyScrollbarTheme(ReadmeRichTextBox, dark);
             Win11Visual.ApplyScrollbarTheme(textBox1, dark);
+            // The settings list scrolls; its native scroll bar stays light otherwise.
+            Win11Visual.ApplyScrollbarTheme(Win10SettingsPanel, dark);
         }
 
         private void Diag(string message)
@@ -714,14 +725,7 @@ namespace DWS_Lite
             Progressbaradd(5); //65
             if (checkBoxSetDefaultPhoto.Checked)
             {
-                SetRegValueHkcu(@"Software\Classes\.ico", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
-                SetRegValueHkcu(@"Software\Classes\.tiff", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
-                SetRegValueHkcu(@"Software\Classes\.bmp", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
-                SetRegValueHkcu(@"Software\Classes\.png", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
-                SetRegValueHkcu(@"Software\Classes\.gif", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
-                SetRegValueHkcu(@"Software\Classes\.jpeg", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
-                SetRegValueHkcu(@"Software\Classes\.jpg", null, "PhotoViewer.FileAssoc.Tiff", RegistryValueKind.String);
-                _OutPut("Set Default PhotoViewer");
+                SetLegacyPhotoViewer();
             }
             Progressbaradd(10); //70
             if (checkBoxSPYTasks.Checked)
@@ -2120,6 +2124,7 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
             btnFixRotateScreen.Text = GetTranslateText("btnFixRotateScreen");
             tabPageMain.Text = GetTranslateText("tabPageMain");
             tabPageAbout.Text = GetTranslateText("tabPageAbout");
+            labelMoonInfo.Text = GetTranslateText("labelMoonInfo");
             tabPageReadMe.Text = GetTranslateText("tabPageReadMe");
             tabPageSettings.Text = GetTranslateText("tabPageSettings");
             tabPageUtilites.Text = GetTranslateText("tabPageUtilites");
@@ -2294,6 +2299,47 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
         #endregion
 
         #region registry
+
+        private const string LegacyPhotoProgId = "PhotoViewer.FileAssoc.Tiff";
+
+        /// <summary>
+        /// Makes the legacy Windows Photo Viewer the default for common image types.
+        /// Writing only the HKCU Classes default is not enough on Windows 8 and later:
+        /// the per-user FileExts UserChoice entry overrides it. So the ProgID is also
+        /// registered under OpenWithProgids and UserChoice is removed.
+        /// </summary>
+        private void SetLegacyPhotoViewer()
+        {
+            string[] extensions = { ".ico", ".tiff", ".bmp", ".png", ".gif", ".jpeg", ".jpg" };
+            foreach (var ext in extensions)
+            {
+                SetRegValueHkcu($@"Software\Classes\{ext}", null, LegacyPhotoProgId, RegistryValueKind.String);
+                SetRegValueHkcu($@"Software\Classes\{ext}\OpenWithProgids", LegacyPhotoProgId, string.Empty, RegistryValueKind.String);
+                DeleteUserChoice(ext);
+            }
+            _OutPut("Set Default PhotoViewer");
+        }
+
+        private void DeleteUserChoice(string ext)
+        {
+            const string fileExts = @"Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\";
+            try
+            {
+                using (var key = Registry.CurrentUser.OpenSubKey(fileExts + ext, true))
+                {
+                    if (key != null && key.OpenSubKey("UserChoice") != null)
+                    {
+                        key.DeleteSubKeyTree("UserChoice");
+                        _OutPut($"Removed UserChoice for {ext}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Windows protects this key on some builds; the Classes default still applies elsewhere.
+                _OutPut($"UserChoice not removed for {ext}: {ex.Message}", LogLevel.Error);
+            }
+        }
 
         private void SetRegValueHkcu(string regkeyfolder, string paramname, string paramvalue, RegistryValueKind keytype)
         {
