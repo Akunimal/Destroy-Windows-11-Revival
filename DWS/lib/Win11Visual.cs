@@ -478,8 +478,6 @@ namespace DWS_Lite.lib
                 tab.DrawMode = TabDrawMode.OwnerDrawFixed;
                 OwnerDrawDark[tab] = dark;
 
-                tab.Paint -= TabControl_Paint;
-                tab.Paint += TabControl_Paint;
                 tab.DrawItem -= TabControl_DrawItem;
                 tab.DrawItem += TabControl_DrawItem;
                 Invalidate(tab);
@@ -490,34 +488,6 @@ namespace DWS_Lite.lib
             }
         }
 
-        /// <summary>
-        /// Fill the strip row before the tabs are drawn on top of it: DrawItem only
-        /// paints the tab rectangles themselves, so anything the visual style left
-        /// behind (the space after the last tab, the frame around the control) would
-        /// otherwise still show in the light system colour.
-        /// </summary>
-        private static void TabControl_Paint(object sender, PaintEventArgs e)
-        {
-            var tab = sender as TabControl;
-            if (tab == null || e == null || e.Graphics == null) return;
-
-            var surface = IsOwnerDrawDark(tab)
-                ? DarkSurface
-                : LightSurface;
-
-            // Fill the whole client area, not just the strip row: the TabControl
-            // cannot hold a BackColor (the assignment is silently ignored), so its
-            // background stays SystemColors.Control. The tab pages are child windows
-            // drawn on top, so they are unaffected; this only covers the light ring
-            // left around them and the strip itself.
-            var area = tab.ClientRectangle;
-            if (area.Width <= 0 || area.Height <= 0) return;
-
-            using (var brush = new SolidBrush(surface))
-            {
-                e.Graphics.FillRectangle(brush, area);
-            }
-        }
 
         private static void TabControl_DrawItem(object sender, DrawItemEventArgs e)
         {
@@ -528,7 +498,9 @@ namespace DWS_Lite.lib
             var surface = dark ? DarkSurface : LightSurface;
             var content = dark ? DarkContent : LightContent;
             var text = dark ? DarkText : LightText;
-            var idle = dark ? DarkTextSecondary : LightTextSecondary;
+            // Every tab label uses the full text colour: on dark the secondary grey
+            // was too faint to read, so only the selected tab stands out by its
+            // underline and background.
             var accent = dark ? AccentDark : AccentLight;
 
             var r = tab.GetTabRect(e.Index);
@@ -554,7 +526,7 @@ namespace DWS_Lite.lib
                 page == null ? string.Empty : (page.Text ?? string.Empty),
                 e.Font,
                 r,
-                selected ? text : idle,
+                text,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
         }
 

@@ -31,7 +31,7 @@ namespace DWS_Lite
         /// </summary>
         private void InitializeComponent()
         {
-            this.FormTabsControl = new System.Windows.Forms.TabControl();
+            this.FormTabsControl = new DWS_Lite.lib.ThemedTabControl();
             this.tabPageMain = new System.Windows.Forms.TabPage();
             this.btnDestroyWindows78Spy = new System.Windows.Forms.Button();
             this.LogOutputTextBox = new System.Windows.Forms.RichTextBox();
@@ -1324,7 +1324,7 @@ namespace DWS_Lite
 
         #endregion
 
-        private TabControl FormTabsControl;
+        private DWS_Lite.lib.ThemedTabControl FormTabsControl;
         private TabPage tabPageMain;
         private TabPage tabPageSettings;
         private TabPage tabPageUtilites;
