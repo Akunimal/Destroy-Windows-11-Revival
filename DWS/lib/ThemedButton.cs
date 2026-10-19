@@ -5,17 +5,18 @@ using System.Windows.Forms;
 namespace DWS_Lite.lib
 {
     /// <summary>
-    /// Flat button whose disabled state keeps readable text on the dark palette.
+    /// Flat button drawn with the dark palette in every state.
     ///
     /// A disabled flat button is painted with ControlPaint.DrawStringDisabled, which uses
-    /// system colours and ignores ForeColor. Only the disabled dark state is owner-drawn:
-    /// the palette fill, the flat border, and DarkTextDisabled for the caption.
+    /// system colours and ignores ForeColor. In dark mode this control paints the fill,
+    /// the flat border and the caption itself, enabled or not. The owner-paint mode
+    /// depends only on the theme and the flat style, never on Enabled.
     /// </summary>
     internal class ThemedButton : Button
     {
         private bool _dark;
 
-        /// <summary>Set by the palette. Only dark + disabled + flat takes the owner-drawn path.</summary>
+        /// <summary>Set by the palette. Dark + flat = owner-drawn in every state.</summary>
         public bool Dark
         {
             get { return _dark; }
@@ -29,12 +30,12 @@ namespace DWS_Lite.lib
         protected override void OnEnabledChanged(EventArgs e)
         {
             base.OnEnabledChanged(e);
-            UpdatePaintMode();
+            Invalidate();
         }
 
         private bool OwnerDrawn
         {
-            get { return _dark && !Enabled && FlatStyle == FlatStyle.Flat; }
+            get { return _dark && FlatStyle == FlatStyle.Flat; }
         }
 
         private void UpdatePaintMode()
@@ -43,7 +44,6 @@ namespace DWS_Lite.lib
             SetStyle(ControlStyles.UserPaint, owner);
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, owner);
             Invalidate();
-            Refresh();
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
@@ -81,7 +81,8 @@ namespace DWS_Lite.lib
                 g.DrawRectangle(pen, rect);
             }
 
-            TextRenderer.DrawText(g, Text, Font, ClientRectangle, Win11Visual.DarkTextDisabled,
+            Color textColor = Enabled ? ForeColor : Win11Visual.DarkTextDisabled;
+            TextRenderer.DrawText(g, Text, Font, ClientRectangle, textColor,
                 TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis);
         }
     }

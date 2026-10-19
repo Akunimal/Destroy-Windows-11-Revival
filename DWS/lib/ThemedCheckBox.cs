@@ -6,11 +6,12 @@ using System.Windows.Forms;
 namespace DWS_Lite.lib
 {
     /// <summary>
-    /// CheckBox whose disabled state keeps readable text on the dark palette.
+    /// CheckBox drawn with the dark palette in every state.
     ///
     /// The system paints a disabled CheckBox with ControlPaint.DrawStringDisabled, which
-    /// ignores ForeColor. Only the disabled dark state is painted here; enabled and light
-    /// states use the native paint. Owner paint is switched on only while needed.
+    /// ignores ForeColor, and its box stays light. In dark mode this control paints the
+    /// box and the text itself, enabled or not. The owner-paint mode depends only on the
+    /// theme, never on Enabled: switching it per state made enabled boxes disappear.
     /// </summary>
     internal class ThemedCheckBox : CheckBox
     {
@@ -19,40 +20,34 @@ namespace DWS_Lite.lib
 
         private bool _dark;
 
-        /// <summary>Set by the palette. Only dark + disabled takes the owner-drawn path.</summary>
+        /// <summary>Set by the palette. Dark = owner-drawn in every state; light = native.</summary>
         public bool Dark
         {
             get { return _dark; }
             set
             {
                 _dark = value;
-                UpdatePaintMode();
+                SetStyle(ControlStyles.UserPaint, value);
+                SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, value);
+                Invalidate();
             }
         }
 
         protected override void OnEnabledChanged(EventArgs e)
         {
             base.OnEnabledChanged(e);
-            UpdatePaintMode();
-        }
-
-        private bool OwnerDrawn
-        {
-            get { return _dark && !Enabled; }
-        }
-
-        private void UpdatePaintMode()
-        {
-            bool owner = OwnerDrawn;
-            SetStyle(ControlStyles.UserPaint, owner);
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, owner);
             Invalidate();
-            Refresh();
+        }
+
+        protected override void OnCheckedChanged(EventArgs e)
+        {
+            base.OnCheckedChanged(e);
+            Invalidate();
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
-            if (!OwnerDrawn)
+            if (!_dark)
             {
                 base.OnPaintBackground(e);
                 return;
@@ -66,7 +61,7 @@ namespace DWS_Lite.lib
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            if (!OwnerDrawn)
+            if (!_dark)
             {
                 base.OnPaint(e);
                 return;
@@ -75,8 +70,8 @@ namespace DWS_Lite.lib
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            // With AllPaintingInWmPaint the background is not erased for us; without this
-            // fill every repaint draws the text on top of the previous one (ghosting).
+            // Full background fill first: with AllPaintingInWmPaint nothing else erases the
+            // previous frame, so skipping this leaves ghost text behind.
             using (var background = new SolidBrush(BackColor))
             {
                 g.FillRectangle(background, ClientRectangle);
@@ -85,17 +80,42 @@ namespace DWS_Lite.lib
             var box = new Rectangle(1, (Height - BoxSize) / 2, BoxSize, BoxSize);
             DrawBox(g, box);
 
+            Color textColor = Enabled ? ForeColor : Win11Visual.DarkTextDisabled;
             var textRect = new Rectangle(box.Right + TextGap, 0, Math.Max(0, Width - box.Right - TextGap), Height);
-            TextRenderer.DrawText(g, Text, Font, textRect, Win11Visual.DarkTextDisabled,
+            TextRenderer.DrawText(g, Text, Font, textRect, textColor,
                 TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak);
+
+            if (Focused && ShowFocusCues)
+            {
+                ControlPaint.DrawFocusRectangle(g, textRect);
+            }
         }
 
         private void DrawBox(Graphics g, Rectangle box)
         {
             bool filled = CheckState != CheckState.Unchecked;
-            Color fill = filled ? Win11Visual.DarkCheckDisabledBorder : Color.FromArgb(56, 56, 56);
-            Color stroke = Win11Visual.DarkCheckDisabledBorder;
-            Color mark = Color.FromArgb(43, 43, 43);
+
+            Color fill;
+            Color stroke;
+            Color mark;
+            if (!Enabled)
+            {
+                fill = filled ? Win11Visual.DarkCheckDisabledBorder : Color.FromArgb(56, 56, 56);
+                stroke = Win11Visual.DarkCheckDisabledBorder;
+                mark = Color.FromArgb(43, 43, 43);
+            }
+            else if (filled)
+            {
+                fill = Win11Visual.AccentDark;
+                stroke = Win11Visual.AccentDark;
+                mark = Win11Visual.AccentOnDark;
+            }
+            else
+            {
+                fill = Win11Visual.DarkField;
+                stroke = Win11Visual.DarkCheckBorder;
+                mark = Win11Visual.DarkText;
+            }
 
             var rect = new RectangleF(box.X + 0.5f, box.Y + 0.5f, box.Width - 1, box.Height - 1);
             using (var path = RoundedRect(rect, 3f))
