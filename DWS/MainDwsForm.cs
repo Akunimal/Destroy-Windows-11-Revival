@@ -1112,9 +1112,21 @@ namespace DWS_Lite
 
         // Removes packages by EXACT name for all users and also removes the
         // provisioned (new-user) copy so they don't come back on new accounts.
+        /// <summary>
+        /// Packages that are never removed, even when a group lists them. Windows 10/11 has
+        /// no legacy Calculator: the stub calc.exe only opens this package, so removing it
+        /// leaves no calculator at all.
+        /// </summary>
+        private static readonly string[] ProtectedPackages =
+        {
+            "Microsoft.WindowsCalculator"
+        };
+
         private void DeleteAppxGroup(string[] packageNames, string logName)
         {
-            if (packageNames == null || packageNames.Length == 0) return;
+            if (packageNames == null) return;
+            packageNames = packageNames.Where(n => !ProtectedPackages.Contains(n, StringComparer.OrdinalIgnoreCase)).ToArray();
+            if (packageNames.Length == 0) return;
             var namesList = string.Join(",", packageNames.Select(n => $"'{n}'"));
             // PowerShell: exact match on Name, remove for every user + provisioned.
             var ps =
@@ -1389,7 +1401,7 @@ namespace DWS_Lite
 
         private void btnDeleteMetroAppsInfo_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(@"Delete apps: Calculator, Windows Store, Windows Feedback, and other METRO apps.", @"Info",
+            MessageBox.Show(@"Delete apps: Windows Store, Windows Feedback, and other METRO apps. The Calculator is never removed.", @"Info",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
