@@ -1448,7 +1448,7 @@ namespace DWS_Lite
             checkBoxDeleteWindows78Updates.Enabled = enableordisable;
             checkBoxDeleteGWX.Enabled = enableordisable;
             btnDeleteAllWindows10Apps.Enabled = _win10 && enableordisable;
-            // The catalog and winget source only target Windows 11 (build 22000+).
+            // The reinstall button needs Windows 11 (build 22000+).
             btnReinstallWindowsApps.Enabled = _win11 && enableordisable;
             groupBoxUACEdit.Enabled = enableordisable;
             btnDeleteMetroAppsInfo.Enabled = enableordisable;
