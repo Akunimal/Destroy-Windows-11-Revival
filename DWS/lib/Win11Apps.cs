@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +12,37 @@ namespace DWS_Lite.lib
     /// </summary>
     internal static class Win11Apps
     {
+        /// <summary>
+        /// Microsoft Store product IDs (winget --source msstore), keyed by package name.
+        /// Each ID was checked against the product's PackageFamilyName. Packages missing here
+        /// are not sold in the Store (system components) and cannot be reinstalled this way.
+        /// </summary>
+        public static readonly Dictionary<string, string> StoreIds =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Clipchamp.Clipchamp", "9P1J8S7CCWWT" },
+            { "Microsoft.BingNews", "9WZDNCRFHVFW" },
+            { "Microsoft.BingSearch", "9NZBF4GT040C" },
+            { "Microsoft.BingWeather", "9WZDNCRFJ3Q2" },
+            { "Microsoft.Copilot", "9NHT9RB2F4HD" },
+            { "Microsoft.GamingApp", "9MV0B5HZVK9Z" },
+            { "Microsoft.Microsoft3DViewer", "9NBLGGH42THS" },
+            { "Microsoft.MicrosoftSolitaireCollection", "9WZDNCRFHWD2" },
+            { "Microsoft.MicrosoftStickyNotes", "9NBLGGH4QGHW" },
+            { "Microsoft.Office.OneNote", "9WZDNCRFHVJL" },
+            { "Microsoft.OutlookForWindows", "9NRX63209R7B" },
+            { "Microsoft.PowerAutomateDesktop", "9NFTCH6J7FHV" },
+            { "Microsoft.StartExperiencesApp", "9PC1H9VN18CM" },
+            { "Microsoft.Windows.Photos", "9WZDNCRFJBH4" },
+            { "Microsoft.WindowsCamera", "9WZDNCRFJBBG" },
+            { "Microsoft.WindowsSoundRecorder", "9WZDNCRFHWKN" },
+            { "Microsoft.XboxGamingOverlay", "9NZKPSTSNW4P" },
+            { "Microsoft.ZuneMusic", "9WZDNCRFJ3PT" },
+            { "Microsoft.ZuneVideo", "9WZDNCRFJ3P2" },
+            { "MicrosoftCorporationII.MicrosoftFamily", "9PDJDJS743XF" },
+            { "MicrosoftCorporationII.QuickAssist", "9P7BP5VNWKX5" },
+        };
+
         // checkBoxDeleteApp3d
         public static readonly string[] App3d =
         {

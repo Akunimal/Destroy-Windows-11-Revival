@@ -95,6 +95,7 @@ namespace DWS_Lite
             this.btnOpenAndEditHosts = new DWS_Lite.lib.ThemedButton();
             this.btnRestoreSystem = new DWS_Lite.lib.ThemedButton();
             this.btnDeleteAllWindows10Apps = new DWS_Lite.lib.ThemedButton();
+            this.btnReinstallWindowsApps = new DWS_Lite.lib.ThemedButton();
             this.tabPageAbout = new System.Windows.Forms.TabPage();
             this.label1 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -839,6 +840,7 @@ namespace DWS_Lite
             this.tabPageUtilites.Controls.Add(this.btnOpenAndEditHosts);
             this.tabPageUtilites.Controls.Add(this.btnRestoreSystem);
             this.tabPageUtilites.Controls.Add(this.btnDeleteAllWindows10Apps);
+            this.tabPageUtilites.Controls.Add(this.btnReinstallWindowsApps);
             this.tabPageUtilites.Controls.Add(this.btnDisableOfficeUpdate);
             this.tabPageUtilites.Location = new System.Drawing.Point(4, 22);
             this.tabPageUtilites.Name = "tabPageUtilites";
@@ -1031,6 +1033,19 @@ namespace DWS_Lite
             this.btnDeleteAllWindows10Apps.Text = "Delete all windows 10 metro apps";
             this.btnDeleteAllWindows10Apps.UseVisualStyleBackColor = false;
             this.btnDeleteAllWindows10Apps.Click += new System.EventHandler(this.btnDeleteAllWindows10Apps_Click);
+            //
+            // btnReinstallWindowsApps
+            //
+            this.btnReinstallWindowsApps.BackColor = System.Drawing.Color.Transparent;
+            this.btnReinstallWindowsApps.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnReinstallWindowsApps.ForeColor = System.Drawing.Color.Black;
+            this.btnReinstallWindowsApps.Location = new System.Drawing.Point(223, 176);
+            this.btnReinstallWindowsApps.Name = "btnReinstallWindowsApps";
+            this.btnReinstallWindowsApps.Size = new System.Drawing.Size(214, 23);
+            this.btnReinstallWindowsApps.TabIndex = 22;
+            this.btnReinstallWindowsApps.Text = "Reinstall Windows apps";
+            this.btnReinstallWindowsApps.UseVisualStyleBackColor = false;
+            this.btnReinstallWindowsApps.Click += new System.EventHandler(this.btnReinstallWindowsApps_Click);
             // 
             // tabPageAbout
             // 
@@ -1343,6 +1358,7 @@ namespace DWS_Lite
         private DWS_Lite.lib.ThemedCheckBox checkBoxSPYTasks;
         private DWS_Lite.lib.ThemedCheckBox checkBoxDeleteWindows10Apps;
         private DWS_Lite.lib.ThemedButton btnDeleteAllWindows10Apps;
+        private DWS_Lite.lib.ThemedButton btnReinstallWindowsApps;
         private DWS_Lite.lib.ThemedCheckBox checkBoxDeleteApp3d;
         private DWS_Lite.lib.ThemedCheckBox checkBoxDeleteAppXBOX;
         private DWS_Lite.lib.ThemedCheckBox checkBoxDeleteAppVoice;

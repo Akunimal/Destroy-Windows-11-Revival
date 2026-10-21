@@ -111,6 +111,9 @@
   <data name="btnDeleteAllWindows10Apps" xml:space="preserve">
     <value>Eliminar apps Metro</value>
   </data>
+  <data name="btnReinstallWindowsApps" xml:space="preserve">
+    <value>Reinstalar apps de Windows</value>
+  </data>
   <data name="btnDeleteOneDrive" xml:space="preserve">
     <value>Eliminar One Drive</value>
   </data>

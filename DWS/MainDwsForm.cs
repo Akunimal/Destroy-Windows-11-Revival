@@ -216,6 +216,7 @@ namespace DWS_Lite
             }
             // The dark-mode toggle only makes sense on Windows 11.
             checkBoxWin11DarkMode.Visible = _win11;
+            btnReinstallWindowsApps.Enabled = _win11;
             // check Win 10/11 vs 7/8.1
             if (windowsBuildNumber >= 10000) return;
             _win10 = false;
@@ -1229,6 +1230,75 @@ namespace DWS_Lite
             }
         }
 
+        private void btnReinstallWindowsApps_Click(object sender, EventArgs e)
+        {
+            EnableOrDisableTab(false);
+            new Thread(() =>
+            {
+                ReinstallWindowsApps();
+                Invoke(new MethodInvoker(delegate
+                {
+                    EnableOrDisableTab(true);
+                    MessageBox.Show(GetTranslateText("Complete"), GetTranslateText("Info"), MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }));
+            }).Start();
+        }
+
+        private const int WingetTimeoutMs = 10 * 60 * 1000;
+
+        // Re-registers every installed AppX package for all users from its own manifest, then
+        // reinstalls the removed catalog apps from the Store. winget is missing on some Windows 11
+        // editions (LTSC, Store blocked by policy): the Store step is then skipped and logged.
+        private void ReinstallWindowsApps()
+        {
+            var ps =
+                "Get-AppxPackage -AllUsers | ForEach-Object { " +
+                "Add-AppxPackage -DisableDevelopmentMode -Register (Join-Path $_.InstallLocation 'AppXManifest.xml') -EA SilentlyContinue }";
+            ProcStartargs("powershell", $"-NoProfile -ExecutionPolicy Bypass -Command \"{ps}\"");
+            _OutPut("Reinstall Windows apps: re-registered all AppX packages");
+
+            if (RunProcess("winget", "--version", 15000) != 0)
+            {
+                _OutPut("Reinstall Windows apps: winget not available, Store reinstall skipped", LogLevel.Info);
+                return;
+            }
+            foreach (var pair in Win11Apps.StoreIds)
+            {
+                var exitCode = RunProcess("winget",
+                    $"install --id {pair.Value} --exact --source msstore --silent --disable-interactivity " +
+                    "--accept-package-agreements --accept-source-agreements", WingetTimeoutMs);
+                _OutPut($"Reinstall {pair.Key} ({pair.Value}): exit {exitCode}", LogLevel.Info);
+            }
+            foreach (var name in Win11Apps.AllCatalogApps().Where(n => !Win11Apps.StoreIds.ContainsKey(n)))
+                _OutPut($"Reinstall skipped, no Store ID: {name}", LogLevel.Info);
+        }
+
+        // Runs a hidden process and returns its exit code, or -1 if it cannot start or times out.
+        private static int RunProcess(string fileName, string args, int timeoutMs)
+        {
+            try
+            {
+                using (var proc = Process.Start(new ProcessStartInfo
+                {
+                    FileName = fileName,
+                    Arguments = args,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }))
+                {
+                    if (proc == null) return -1;
+                    if (proc.WaitForExit(timeoutMs)) return proc.ExitCode;
+                    proc.Kill();
+                    return -1;
+                }
+            }
+            catch (Exception)
+            {
+                return -1;
+            }
+        }
+
         private void btnRestoreSystem_Click(object sender, EventArgs e)
         {
             Process.Start(_system32Location + "rstrui.exe");
@@ -1379,6 +1449,8 @@ namespace DWS_Lite
             checkBoxDeleteWindows78Updates.Enabled = enableordisable;
             checkBoxDeleteGWX.Enabled = enableordisable;
             btnDeleteAllWindows10Apps.Enabled = _win10 && enableordisable;
+            // The catalog and winget source only target Windows 11 (build 22000+).
+            btnReinstallWindowsApps.Enabled = _win11 && enableordisable;
             groupBoxUACEdit.Enabled = enableordisable;
             btnDeleteMetroAppsInfo.Enabled = enableordisable;
             btnDeleteOneDrive.Enabled = enableordisable;
@@ -2141,6 +2213,7 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
             tabPageSettings.Text = GetTranslateText("tabPageSettings");
             tabPageUtilites.Text = GetTranslateText("tabPageUtilites");
             btnDeleteAllWindows10Apps.Text = GetTranslateText("btnDeleteAllWindows10Apps");
+            btnReinstallWindowsApps.Text = GetTranslateText("btnReinstallWindowsApps");
             btnDeleteOneDrive.Text = GetTranslateText("btnDeleteOneDrive");
             btnOpenAndEditHosts.Text = GetTranslateText("btnOpenAndEditHosts");
             btnProfessionalMode.Text = GetTranslateText("btnProfessionalMode");
