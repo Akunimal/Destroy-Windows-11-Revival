@@ -1248,8 +1248,9 @@ namespace DWS_Lite
         private const int WingetTimeoutMs = 10 * 60 * 1000;
 
         // Re-registers every installed AppX package for all users from its own manifest, then
-        // reinstalls the removed catalog apps from the Store. winget is missing on some Windows 11
-        // editions (LTSC, Store blocked by policy): the Store step is then skipped and logged.
+        // reinstalls the Store and fundamental apps (Win11Apps.StoreIds) with winget. winget is
+        // missing on some Windows 11 editions (LTSC, Store blocked by policy): the Store step is
+        // then skipped and logged.
         private void ReinstallWindowsApps()
         {
             var ps =
@@ -1270,8 +1271,6 @@ namespace DWS_Lite
                     "--accept-package-agreements --accept-source-agreements", WingetTimeoutMs);
                 _OutPut($"Reinstall {pair.Key} ({pair.Value}): exit {exitCode}", LogLevel.Info);
             }
-            foreach (var name in Win11Apps.AllCatalogApps().Where(n => !Win11Apps.StoreIds.ContainsKey(n)))
-                _OutPut($"Reinstall skipped, no Store ID: {name}", LogLevel.Info);
         }
 
         // Runs a hidden process and returns its exit code, or -1 if it cannot start or times out.
