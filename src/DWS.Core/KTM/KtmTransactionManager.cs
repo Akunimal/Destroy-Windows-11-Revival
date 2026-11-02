@@ -1,0 +1,248 @@
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Win32.SafeHandles;
+
+namespace DWS.Core.KTM;
+
+public sealed partial class KtmTransactionManager : IDisposable
+{
+    public static readonly IntPtr HKEY_LOCAL_MACHINE = new(unchecked((int)0x80000002));
+    public static readonly IntPtr HKEY_CURRENT_USER = new(unchecked((int)0x80000001));
+
+    private const uint KEY_ALL_ACCESS = 0xF003F;
+    private const uint REG_DWORD = 4;
+    private const uint REG_SZ = 1;
+
+    private readonly SafeTransactionHandle _transactionHandle;
+    private bool _committed;
+    private bool _disposed;
+
+    public SafeTransactionHandle TransactionHandle => _transactionHandle;
+    public string Description { get; }
+
+    public KtmTransactionManager(string description = "DWS_KtmTransaction")
+    {
+        Description = description;
+        _transactionHandle = CreateTransaction(
+            IntPtr.Zero,
+            IntPtr.Zero,
+            0,
+            0,
+            0,
+            0,
+            description);
+
+        if (_transactionHandle.IsInvalid)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to create KTM transaction.");
+        }
+    }
+
+    [LibraryImport("ktmw32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial SafeTransactionHandle CreateTransaction(
+        IntPtr securityAttributes,
+        IntPtr guid,
+        uint createOptions,
+        uint isolationLevel,
+        uint isolationFlags,
+        uint timeout,
+        string description);
+
+    [LibraryImport("ktmw32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CommitTransaction(SafeTransactionHandle transactionHandle);
+
+    [LibraryImport("ktmw32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool RollbackTransaction(SafeTransactionHandle transactionHandle);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int RegCreateKeyTransactedW(
+        IntPtr hKey,
+        string lpSubKey,
+        uint reserved,
+        IntPtr lpClass,
+        uint dwOptions,
+        uint samDesired,
+        IntPtr lpSecurityAttributes,
+        out SafeRegistryHandle phkResult,
+        out uint lpdwDisposition,
+        SafeTransactionHandle hTransaction,
+        IntPtr pExtendedOptions);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int RegSetValueExW(
+        SafeRegistryHandle hKey,
+        string lpValueName,
+        uint reserved,
+        uint dwType,
+        byte[] lpData,
+        uint cbData);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int RegDeleteValueW(
+        SafeRegistryHandle hKey,
+        string lpValueName);
+
+    public void SetDword(IntPtr hRootKey, string subKeyPath, string valueName, int data)
+    {
+        ThrowIfDisposedOrCommitted();
+
+        int error = RegCreateKeyTransactedW(
+            hRootKey,
+            subKeyPath,
+            0,
+            IntPtr.Zero,
+            0,
+            KEY_ALL_ACCESS,
+            IntPtr.Zero,
+            out SafeRegistryHandle hKeyResult,
+            out _,
+            _transactionHandle,
+            IntPtr.Zero);
+
+        if (error != 0)
+        {
+            throw new Win32Exception(error, $"Failed to open/create transacted key '{subKeyPath}'.");
+        }
+
+        using (hKeyResult)
+        {
+            byte[] bytes = BitConverter.GetBytes(data);
+            error = RegSetValueExW(hKeyResult, valueName, 0, REG_DWORD, bytes, (uint)bytes.Length);
+            if (error != 0)
+            {
+                throw new Win32Exception(error, $"Failed to set transacted DWORD value '{valueName}'.");
+            }
+        }
+    }
+
+    public void SetString(IntPtr hRootKey, string subKeyPath, string valueName, string data)
+    {
+        ThrowIfDisposedOrCommitted();
+
+        int error = RegCreateKeyTransactedW(
+            hRootKey,
+            subKeyPath,
+            0,
+            IntPtr.Zero,
+            0,
+            KEY_ALL_ACCESS,
+            IntPtr.Zero,
+            out SafeRegistryHandle hKeyResult,
+            out _,
+            _transactionHandle,
+            IntPtr.Zero);
+
+        if (error != 0)
+        {
+            throw new Win32Exception(error, $"Failed to open/create transacted key '{subKeyPath}'.");
+        }
+
+        using (hKeyResult)
+        {
+            byte[] bytes = Encoding.Unicode.GetBytes(data + "\0");
+            error = RegSetValueExW(hKeyResult, valueName, 0, REG_SZ, bytes, (uint)bytes.Length);
+            if (error != 0)
+            {
+                throw new Win32Exception(error, $"Failed to set transacted String value '{valueName}'.");
+            }
+        }
+    }
+
+    public void SetValue(string hive, string keyPath, string valueName, object value)
+    {
+        IntPtr hRoot = ResolveHive(hive);
+        if (value is int intVal)
+        {
+            SetDword(hRoot, keyPath, valueName, intVal);
+        }
+        else if (int.TryParse(value?.ToString(), out int parsedInt))
+        {
+            SetDword(hRoot, keyPath, valueName, parsedInt);
+        }
+        else
+        {
+            SetString(hRoot, keyPath, valueName, value?.ToString() ?? string.Empty);
+        }
+    }
+
+    public void DeleteValue(string hive, string keyPath, string valueName)
+    {
+        ThrowIfDisposedOrCommitted();
+        IntPtr hRoot = ResolveHive(hive);
+
+        int error = RegCreateKeyTransactedW(
+            hRoot,
+            keyPath,
+            0,
+            IntPtr.Zero,
+            0,
+            KEY_ALL_ACCESS,
+            IntPtr.Zero,
+            out SafeRegistryHandle hKeyResult,
+            out _,
+            _transactionHandle,
+            IntPtr.Zero);
+
+        if (error != 0)
+        {
+            return; // Key does not exist, nothing to delete
+        }
+
+        using (hKeyResult)
+        {
+            RegDeleteValueW(hKeyResult, valueName);
+        }
+    }
+
+    public void Commit()
+    {
+        ThrowIfDisposedOrCommitted();
+        if (!CommitTransaction(_transactionHandle))
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Kernel transaction commit failed.");
+        }
+        _committed = true;
+    }
+
+    public void Rollback()
+    {
+        if (_committed || _disposed || _transactionHandle.IsInvalid || _transactionHandle.IsClosed)
+        {
+            return;
+        }
+
+        RollbackTransaction(_transactionHandle);
+    }
+
+    private static IntPtr ResolveHive(string hive)
+    {
+        return string.Equals(hive, "HKCU", StringComparison.OrdinalIgnoreCase)
+            ? HKEY_CURRENT_USER
+            : HKEY_LOCAL_MACHINE;
+    }
+
+    private void ThrowIfDisposedOrCommitted()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_committed)
+        {
+            throw new InvalidOperationException("Transaction has already been committed.");
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        if (!_committed && !_transactionHandle.IsInvalid && !_transactionHandle.IsClosed)
+        {
+            RollbackTransaction(_transactionHandle);
+        }
+
+        _transactionHandle.Dispose();
+    }
+}

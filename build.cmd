@@ -1,52 +1,39 @@
 @echo off
 REM ===========================================================================
-REM  Build Destroy-Windows-11-Revival (Release) on Windows.
-REM
-REM  Requirements: any recent .NET SDK or Visual Studio / Build Tools MSBuild.
-REM  The .NET Framework 4.0 targeting pack is pulled automatically from NuGet.
+REM  Build DWS 11 Enterprise v2.0 (Release) on Windows.
+REM  Modern .NET 8.0 SDK (Native AOT, Avalonia UI, Kestrel Minimal APIs)
 REM ===========================================================================
 setlocal
 
-set MSBUILD_CMD=
-set HAS_SDK=
-for /f "delims=" %%S in ('dotnet --list-sdks 2^>nul') do set HAS_SDK=1
-if defined HAS_SDK (
-  set MSBUILD_CMD=dotnet msbuild
+if exist "%USERPROFILE%\.dotnet\dotnet.exe" (
+    set "PATH=%USERPROFILE%\.dotnet;%PATH%"
 )
 
-if not defined MSBUILD_CMD (
-  for %%P in (
-    "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
-    "%ProgramFiles%\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
-    "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
-    "%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
-    "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
-    "%ProgramFiles%\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe"
-    "%ProgramFiles(x86)%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
-    "%ProgramFiles%\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe"
-  ) do (
-    if exist "%%~P" (
-      set MSBUILD_CMD="%%~P"
-      goto :found_msbuild
-    )
-  )
+cd /d "%~dp0"
+
+echo ===================================================
+echo [1/2] Restaurando dependencias NuGet para .NET 8...
+echo ===================================================
+dotnet restore DWS.Enterprise.sln
+if errorlevel 1 (
+    echo ERROR: Restore failed.
+    exit /b 1
 )
-
-:found_msbuild
-if not defined MSBUILD_CMD (
-  echo ERROR: Neither the .NET SDK nor Visual Studio MSBuild was found.
-  echo Install a .NET SDK or VS Build Tools and retry.
-  exit /b 1
-)
-
-echo [1/2] Restoring NuGet packages with %MSBUILD_CMD%...
-%MSBUILD_CMD% "%~dp0DWS\DWS_Lite.csproj" /t:Restore
-if errorlevel 1 exit /b 1
-
-echo [2/2] Building Release...
-%MSBUILD_CMD% "%~dp0DWS\DWS_Lite.csproj" /p:Configuration=Release
-if errorlevel 1 exit /b 1
 
 echo.
-echo Done. Binary: DWS\bin\Release\DWS_Lite.exe
-exit /b 0
+echo ===================================================
+echo [2/2] Compilando DWS.Enterprise.sln en modo Release...
+echo ===================================================
+dotnet build DWS.Enterprise.sln -c Release --no-restore
+if errorlevel 1 (
+    echo ERROR: Build failed.
+    exit /b 1
+)
+
+echo.
+echo ===================================================
+echo Compilacion exitosa.
+echo Binarios generados:
+echo   - src\DWS.GUI\bin\Release\net8.0-windows\DWS.GUI.exe
+echo   - src\DWS.Worker\bin\Release\net8.0-windows\DWS.Worker.exe
+echo ===================================================

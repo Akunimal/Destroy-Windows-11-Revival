@@ -1,0 +1,158 @@
+{
+  "schemaVersion": "2.0.0",
+  "signature": "DEFAULT_BUILTIN_ENTERPRISE_PINNED_V2",
+  "rules": [
+    {
+      "id": "disable_telemetry",
+      "category": "Telemetry",
+      "displayName": "Disable Diagnostic Data Collection (Telemetry)",
+      "description": "Sets AllowTelemetry to 0 via Kernel Transaction and Group Policy (PReg1).",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "AllowTelemetry",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "id": "disable_copilot",
+      "category": "AI",
+      "displayName": "Disable Windows Copilot",
+      "description": "Turns off Windows Copilot completely in user sessions.",
+      "minBuild": 22621,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+          "name": "TurnOffWindowsCopilot",
+          "kind": "DWord",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "id": "disable_bing_search",
+      "category": "Privacy",
+      "displayName": "Disable Bing Web Search in Start Menu",
+      "description": "Prevents Windows Search from sending queries to Bing over the internet.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "DisableSearchBoxSuggestions",
+          "kind": "DWord",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "id": "disable_cortana",
+      "category": "Privacy",
+      "displayName": "Disable Cortana Voice Assistant",
+      "description": "Disables Cortana integration and background indexing.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "AllowCortana",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "id": "disable_advertising_id",
+      "category": "Privacy",
+      "displayName": "Disable Advertising ID for User Tracking",
+      "description": "Disables personalized ad tracking identifier.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo",
+          "name": "DisabledByGroupPolicy",
+          "kind": "DWord",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "id": "disable_wpbt",
+      "category": "Security",
+      "displayName": "Disable WPBT (Firmware Binary Injection)",
+      "description": "Blocks OEM firmware from injecting third-party executables during boot.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
+          "name": "DisableWPBTExecution",
+          "kind": "DWord",
+          "value": "1"
+        }
+      ]
+    },
+    {
+      "id": "disable_edge_prelaunch",
+      "category": "Performance",
+      "displayName": "Disable Microsoft Edge Background Prelaunch",
+      "description": "Stops Microsoft Edge from running in the background at startup.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\MicrosoftEdge\\Main",
+          "name": "AllowPrelaunch",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "id": "disable_widgets",
+      "category": "UI",
+      "displayName": "Disable Windows Widgets (News & Interests)",
+      "description": "Disables background widget feed processes and taskbar widget button.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "isSelected": true,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Dsh",
+          "name": "AllowNewsAndInterests",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ]
+    }
+  ]
+}

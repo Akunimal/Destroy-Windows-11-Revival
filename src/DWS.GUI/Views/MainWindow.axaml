@@ -1,0 +1,288 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:DWS.GUI.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="DWS.GUI.Views.MainWindow"
+        x:DataType="vm:MainViewModel"
+        Title="DWS 11 Enterprise v2.0"
+        Width="1200" Height="800"
+        MinWidth="900" MinHeight="600"
+        TransparencyLevelHint="Mica"
+        Background="#1E1E1E">
+
+  <DockPanel>
+    <!-- Barra Superior -->
+    <Border DockPanel.Dock="Top" 
+            Background="#252526"
+            Padding="20,15">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="20">
+          <TextBlock Text="DWS 11 Enterprise" 
+                     FontSize="24" 
+                     FontWeight="Bold"
+                     Foreground="White"
+                     VerticalAlignment="Center"/>
+          <Border Background="#0078D4" 
+                  CornerRadius="4" 
+                  Padding="8,4">
+            <TextBlock Text="v2.0 Native AOT" 
+                       FontSize="12" 
+                       Foreground="White"
+                       VerticalAlignment="Center"/>
+          </Border>
+        </StackPanel>
+        
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15">
+          <TextBlock Text="{Binding StatusText}" 
+                     VerticalAlignment="Center"
+                     Foreground="#CCCCCC"/>
+          <ProgressBar Value="{Binding ProgressPercentage}"
+                       Maximum="100"
+                       Width="200"
+                       IsVisible="{Binding IsRunning}"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Panel Principal con Tabs -->
+    <TabControl Margin="20" SelectedIndex="{Binding SelectedTabIndex}">
+      <!-- Tab 1: Optimizaciones -->
+      <TabItem Header="Optimizaciones">
+        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,*,Auto" Margin="10">
+          <!-- Filtros -->
+          <StackPanel Grid.Row="0" Grid.ColumnSpan="2" 
+                      Orientation="Horizontal" 
+                      Spacing="10" 
+                      Margin="0,0,0,15">
+            <TextBox Watermark="Buscar reglas..." 
+                     Text="{Binding SearchText}"
+                     Width="300"/>
+            <ComboBox ItemsSource="{Binding Categories}"
+                      SelectedItem="{Binding SelectedCategory}"
+                      PlaceholderText="Todas las categorías"
+                      Width="200"/>
+            <Button Content="Seleccionar Todo" 
+                    Command="{Binding SelectAllCommand}"/>
+            <Button Content="Deseleccionar Todo" 
+                    Command="{Binding DeselectAllCommand}"/>
+          </StackPanel>
+
+          <!-- Lista de Reglas -->
+          <Border Grid.Row="1" Grid.Column="0" 
+                  Background="#2D2D30"
+                  CornerRadius="8" 
+                  Padding="10"
+                  Margin="0,0,10,0">
+            <ListBox ItemsSource="{Binding FilteredRules}"
+                     SelectionMode="Multiple">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="10" Margin="5">
+                    <CheckBox IsChecked="{Binding IsSelected}"/>
+                    <StackPanel Spacing="3">
+                      <TextBlock Text="{Binding DisplayName}" 
+                                 FontWeight="SemiBold"
+                                 Foreground="White"/>
+                      <TextBlock Text="{Binding Description}" 
+                                 FontSize="12"
+                                 Foreground="#AAAAAA"
+                                 TextWrapping="Wrap"/>
+                      <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
+                        <Border Background="#0078D4" 
+                                CornerRadius="3" 
+                                Padding="6,2">
+                          <TextBlock Text="{Binding Category}" 
+                                     FontSize="10" 
+                                     Foreground="White"/>
+                        </Border>
+                      </StackPanel>
+                    </StackPanel>
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Border>
+
+          <!-- Log de Salida -->
+          <Border Grid.Row="1" Grid.Column="1" 
+                  Background="#111111" 
+                  CornerRadius="8" 
+                  Padding="10">
+            <TextBox Text="{Binding LogOutput}" 
+                     IsReadOnly="True"
+                     AcceptsReturn="True"
+                     FontFamily="Cascadia Code,Consolas"
+                     FontSize="12"
+                     Background="Transparent"
+                     Foreground="#00FF66"/>
+          </Border>
+
+          <!-- Botones de Acción -->
+          <StackPanel Grid.Row="2" Grid.ColumnSpan="2" 
+                      Orientation="Horizontal" 
+                      Spacing="15" 
+                      HorizontalAlignment="Center"
+                      Margin="0,20,0,0">
+            <Button Content="🔍 Simular (Dry-Run)" 
+                    Command="{Binding DryRunCommand}"
+                    Padding="20,10"/>
+            <Button Content="⚡ Aplicar Optimizaciones (KTM + LGPO)" 
+                    Command="{Binding ApplyCommand}"
+                    Padding="20,10"/>
+            <Button Content="⛔ Abortar" 
+                    Command="{Binding AbortCommand}"
+                    IsEnabled="{Binding IsRunning}"
+                    Padding="20,10"/>
+          </StackPanel>
+        </Grid>
+      </TabItem>
+
+      <!-- Tab 2: Dashboard Web -->
+      <TabItem Header="Dashboard Web">
+        <StackPanel Spacing="20" Margin="20">
+          <TextBlock Text="Panel de Control Local (Kestrel Minimal API)" 
+                     FontSize="22" 
+                     FontWeight="Bold"
+                     Foreground="White"/>
+          
+          <Border Background="#2D2D30"
+                  CornerRadius="8"
+                  Padding="20">
+            <StackPanel Spacing="15">
+              <TextBlock Text="El worker API está configurado en:" 
+                         FontSize="14"
+                         Foreground="#CCCCCC"/>
+              <TextBox Text="{Binding DashboardUrl}" 
+                       IsReadOnly="True"
+                       FontSize="16"
+                       FontFamily="Cascadia Code,Consolas"/>
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="🌐 Abrir en Navegador" 
+                        Command="{Binding OpenDashboardCommand}"/>
+                <Button Content="📋 Copiar URL" 
+                        Command="{Binding CopyDashboardUrlCommand}"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <Border Background="#2D2D30"
+                  CornerRadius="8"
+                  Padding="20">
+            <StackPanel Spacing="10">
+              <TextBlock Text="Estado del Worker" 
+                         FontSize="16" 
+                         FontWeight="SemiBold"
+                         Foreground="White"/>
+              <TextBlock Text="{Binding WorkerStatus}" 
+                         FontSize="14"
+                         Foreground="#00FF66"/>
+              <Button Content="🔄 Refrescar Estado" 
+                      Command="{Binding RefreshWorkerStatusCommand}"/>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </TabItem>
+
+      <!-- Tab 3: Historial y Reversión -->
+      <TabItem Header="Historial y Reversión">
+        <Grid RowDefinitions="Auto,Auto,*" Margin="20">
+          <!-- Selector de Transacción -->
+          <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="15" Margin="0,0,0,20">
+            <TextBlock Text="Seleccionar Transacción:" 
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Foreground="White"/>
+            <ComboBox ItemsSource="{Binding TransactionHistory}"
+                      SelectedItem="{Binding SelectedTransaction}"
+                      Width="400">
+              <ComboBox.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"/>
+                    <TextBlock Text="-"/>
+                    <TextBlock Text="{Binding TransactionId}"/>
+                    <TextBlock Text="("/>
+                    <TextBlock Text="{Binding Changes.Count}"/>
+                    <TextBlock Text="cambios)"/>
+                  </StackPanel>
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Content="🔄 Revertir Transacción Completa"
+                    Command="{Binding RevertFullCommand}"
+                    IsEnabled="{Binding HasSelectedTransaction}"/>
+          </StackPanel>
+
+          <!-- Filtros por Categoría -->
+          <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" Margin="0,0,0,15"
+                      IsVisible="{Binding HasSelectedTransaction}">
+            <TextBlock Text="Revertir por Categoría:" 
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Foreground="White"/>
+            <ItemsControl ItemsSource="{Binding SelectedTransaction.Categories}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal" Spacing="10"/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Button Content="{Binding}"
+                          Command="{Binding $parent[TabControl].((vm:MainViewModel)DataContext).RevertByCategoryCommand}"
+                          CommandParameter="{Binding}"/>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+          
+          <!-- Lista de cambios con reversión selectiva -->
+          <Border Grid.Row="2" 
+                  Background="#2D2D30"
+                  CornerRadius="8"
+                  Padding="10"
+                  IsVisible="{Binding HasSelectedTransaction}">
+            <ListBox ItemsSource="{Binding SelectedTransaction.Changes}"
+                     SelectionMode="Multiple">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Margin="5">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                      <CheckBox IsChecked="{Binding IsSelectedForRevert}"/>
+                      <TextBlock Text="{Binding RuleName}" 
+                                 FontWeight="SemiBold"
+                                 Width="250"
+                                 Foreground="White"/>
+                      <Border Background="#0078D4" 
+                              CornerRadius="3" 
+                              Padding="6,2">
+                        <TextBlock Text="{Binding Category}" 
+                                   FontSize="10" 
+                                   Foreground="White"/>
+                      </Border>
+                      <TextBlock Text="{Binding Status}" 
+                                 Foreground="{Binding StatusColor}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="25,5,0,0">
+                      <TextBlock Text="Antes:" Foreground="#FF6B6B"/>
+                      <TextBlock Text="{Binding PreviousValue}" 
+                                 FontFamily="Cascadia Code,Consolas"
+                                 Foreground="#FF6B6B"/>
+                      <TextBlock Text="→" Foreground="#CCCCCC"/>
+                      <TextBlock Text="Después:" Foreground="#51CF66"/>
+                      <TextBlock Text="{Binding NewValue}" 
+                                 FontFamily="Cascadia Code,Consolas"
+                                 Foreground="#51CF66"/>
+                    </StackPanel>
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Border>
+        </Grid>
+      </TabItem>
+    </TabControl>
+  </DockPanel>
+</Window>
