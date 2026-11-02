@@ -1,5 +1,5 @@
-﻿using System;
-using System.Windows.Forms;
+using System;
+using System.Diagnostics;
 using Microsoft.Win32;
 
 namespace DWS_Lite.lib
@@ -8,45 +8,105 @@ namespace DWS_Lite.lib
     {
         public static object ReadSubKeyValue(string subKey, string keyName)
         {
-            var rkSubKey = Registry.LocalMachine.OpenSubKey(subKey);
-            if (rkSubKey == null)
-            {
-                MessageBox.Show(string.Format(@"Error while reading registry key: {0}\{1} does not exist!", subKey, keyName), @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return null;
-            }
             try
             {
-                var result = rkSubKey.GetValue(keyName);
-                rkSubKey.Close();
-                return result;
-
+                using (var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                using (var rkSubKey = baseKey.OpenSubKey(subKey))
+                {
+                    if (rkSubKey == null) return null;
+                    return rkSubKey.GetValue(keyName);
+                }
             }
-            catch (Exception ex)   //This exception is thrown
+            catch
             {
-                MessageBox.Show(string.Format("Error while reading registry key: {0} param: {1}. ErrorMessage: {2}", subKey, keyName, ex.Message), @"Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                rkSubKey.Close();
                 return null;
             }
         }
+
         public static int GetWindowsBuildNumber()
         {
-            return Convert.ToInt32(ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\", "CurrentBuildNumber"));
+            try
+            {
+                var val = ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "CurrentBuildNumber");
+                return val != null ? Convert.ToInt32(val) : 0;
+            }
+            catch
+            {
+                return 0;
+            }
         }
+
         public static bool UAC_Status()
         {
-            return !Convert.ToBoolean(ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\", "EnableLUA"));
+            try
+            {
+                var val = ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA");
+                return val != null && !Convert.ToBoolean(val);
+            }
+            catch
+            {
+                return false;
+            }
         }
+
         public static int SystemRestore_Status()
         {
-            return Convert.ToInt32(ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore\", "RPSessionInterval"));
+            try
+            {
+                var val = ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore", "RPSessionInterval");
+                if (val != null) return Convert.ToInt32(val);
+                // On Windows 10 & 11, RPSessionInterval is legacy and usually absent,
+                // but System Restore functionality is available via WMI / PowerShell.
+                return 1;
+            }
+            catch
+            {
+                return 1;
+            }
         }
+
         public static string GetProductName()
         {
-            return Convert.ToString(ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\", "ProductName"));
+            var val = ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "ProductName");
+            return val != null ? Convert.ToString(val) : string.Empty;
         }
+
         public static string GetSystemBuild()
         {
-            return Convert.ToString(ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\", "BuildLabEx"));
+            var val = ReadSubKeyValue(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "BuildLabEx");
+            return val != null ? Convert.ToString(val) : string.Empty;
+        }
+
+        /// <summary>
+        /// Checks if BitLocker protection is active on the system drive.
+        /// If BitLocker is ON, modifying BCD bootmenupolicy (e.g. legacy F8) can prompt for recovery keys.
+        /// </summary>
+        public static bool IsBitLockerActive()
+        {
+            try
+            {
+                using (var proc = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        Arguments = "-NoLogo -NoProfile -NonInteractive -Command \"try { (Get-BitLockerVolume -MountPoint $env:SystemDrive -ErrorAction Stop).ProtectionStatus.ToString() } catch { 'Off' }\"",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true
+                    }
+                })
+                {
+                    proc.Start();
+                    var output = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit(5000);
+                    return output.IndexOf("On", StringComparison.OrdinalIgnoreCase) >= 0;
+                }
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

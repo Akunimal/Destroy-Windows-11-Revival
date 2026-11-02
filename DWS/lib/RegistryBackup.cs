@@ -92,6 +92,30 @@ namespace DWS_Lite.lib
             new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\BitLocker", "PreventDeviceEncryption"),
             new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA"),
             new TweakedRegistryValue("HKLM", @"SOFTWARE\Policies\Microsoft\Windows\OneDrive", "DisableFileSyncNGSC"),
+            new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\Session Manager", "DisableWpbtExecution"),
+            new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "EnabledState"),
+            new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "EnabledStateOptions"),
+            new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "Variant"),
+            new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "VariantPayload"),
+            new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "VariantPayloadKind"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Policies\Microsoft\Windows\OOBE", "DisablePrivacyExperience"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Policies\Microsoft\Windows\OOBE", "BypassNRO"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Policies\Microsoft\Windows\OOBE", "SkipMachineOOBE"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Policies\Microsoft\Windows\OOBE", "Protectyourpc"),
+            new TweakedRegistryValue("HKLM", @"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HWSchMode"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR\Graphics", "OptimizationsForWindowedGames"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "SystemResponsiveness"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Priority"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Scheduling Category"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "SFIO Priority"),
+            new TweakedRegistryValue("HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Latency Sensitive"),
+            new TweakedRegistryValue("HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "TaskbarEndTask"),
+            new TweakedRegistryValue("HKCU", @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowSyncProviderNotifications"),
+            new TweakedRegistryValue("HKCU", @"Software\Microsoft\GameBar", "AutoGameModeEnabled"),
+            new TweakedRegistryValue("HKCU", @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "RotatingLockScreenOverlayEnabled"),
+            new TweakedRegistryValue("HKCU", @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SoftLandingEnabled"),
+            new TweakedRegistryValue("HKCU", @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", "")
         };
 
         private const string ManifestName = "manifest.txt";
@@ -208,7 +232,12 @@ namespace DWS_Lite.lib
             @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer",
             @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
             @"HKLM\SYSTEM\CurrentControlSet\Control\BitLocker",
-            @"HKLM\SYSTEM\CurrentControlSet\Services\WSAIFabricSvc"
+            @"HKLM\SYSTEM\CurrentControlSet\Services\WSAIFabricSvc",
+            @"HKLM\SOFTWARE\Policies\Microsoft\Windows\OOBE",
+            @"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager",
+            @"HKLM\SYSTEM\CurrentControlSet\Control\GraphicsDrivers",
+            @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR\Graphics",
+            @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
         };
 
         private static void ExportParentKeys(string folder, Action<string> log)

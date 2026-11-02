@@ -486,46 +486,130 @@ namespace DWS_Lite
                         Arguments = args,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
+                        RedirectStandardError = true,
                         CreateNoWindow = true,
-                        StandardOutputEncoding = Encoding.GetEncoding(866)
+                        StandardOutputEncoding = Encoding.UTF8,
+                        StandardErrorEncoding = Encoding.UTF8
+                    }
+                };
+                proc.OutputDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        _OutPut(e.Data, LogLevel.Info);
+                    }
+                };
+                proc.ErrorDataReceived += (s, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        _OutPut(e.Data, LogLevel.Warning);
                     }
                 };
                 proc.Start();
-                // ReSharper disable once NotAccessedVariable
-                string line = null;
-                while (!proc.StandardOutput.EndOfStream)
-                {
-                    line += Environment.NewLine + proc.StandardOutput.ReadLine();
-                }
+                proc.BeginOutputReadLine();
+                proc.BeginErrorReadLine();
                 proc.WaitForExit();
-#if DEBUG
-                _OutPut($"Start: {name} {args}{Environment.NewLine}Output: {line}", LogLevel.Debug);
-#endif
             }
-                // ReSharper disable once UnusedVariable
             catch (Exception ex)
             {
-                _OutPut($"Error start prog {name} {args}", LogLevel.Error);
-                _OutPut(ex.Message, LogLevel.Debug);
+                _OutPut($"Error executing {name}: {ex.Message}", LogLevel.Error);
                 _fatalErrors++;
-                _errorsList.Add($"Error start prog {name} {args}");
+                _errorsList.Add($"Error executing {name} {args}: {ex.Message}");
             }
         }
 
-        private static void CreateRestorePoint(string description)
+        private void CreateRestorePoint(string description)
         {
-            var oScope = new ManagementScope("\\\\localhost\\root\\default");
-            var oPath = new ManagementPath("SystemRestore");
-            var oGetOp = new ObjectGetOptions();
-            var oProcess = new ManagementClass(oScope, oPath, oGetOp);
+            _OutPut("Ensuring System Restore is enabled on system drive...");
+            try
+            {
+                ProcStartargs("powershell.exe", "-NoLogo -NoProfile -NonInteractive -Command \"try { Enable-ComputerRestore -Drive ($env:SystemDrive + '\\') -ErrorAction Stop; 'System Restore active on system drive.' } catch { 'Notice: ' + $_.Exception.Message }\"");
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"Notice enabling restore: {ex.Message}", LogLevel.Debug);
+            }
 
-            var oInParams =
-                oProcess.GetMethodParameters("CreateRestorePoint");
-            oInParams["Description"] = description;
-            oInParams["RestorePointType"] = 12; // MODIFY_SETTINGS
-            oInParams["EventType"] = 100;
+            _OutPut("Checking restore-point support services (VSS, swprv)...");
+            try
+            {
+                ProcStartargs("cmd.exe", "/c sc config VSS start= demand >nul 2>&1 & sc config swprv start= demand >nul 2>&1 & net start VSS >nul 2>&1");
+            }
+            catch { }
 
-            oProcess.InvokeMethod("CreateRestorePoint", oInParams, null);
+            _OutPut("Setting restore-point frequency override (bypassing 24h throttling)...");
+            const string srKeyPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRestore";
+            object previousFrequency = null;
+            bool frequencyExisted = false;
+
+            try
+            {
+                using (var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                using (var srKey = baseKey.OpenSubKey(srKeyPath, true))
+                {
+                    if (srKey != null)
+                    {
+                        previousFrequency = srKey.GetValue("SystemRestorePointCreationFrequency");
+                        frequencyExisted = (previousFrequency != null);
+                        srKey.SetValue("SystemRestorePointCreationFrequency", 0, RegistryValueKind.DWord);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"Notice: Could not set frequency override: {ex.Message}", LogLevel.Debug);
+            }
+
+            try
+            {
+                _OutPut($"Creating restore point: {description}...");
+                var oScope = new ManagementScope("\\\\localhost\\root\\default");
+                var oPath = new ManagementPath("SystemRestore");
+                var oGetOp = new ObjectGetOptions();
+                using (var oProcess = new ManagementClass(oScope, oPath, oGetOp))
+                using (var oInParams = oProcess.GetMethodParameters("CreateRestorePoint"))
+                {
+                    oInParams["Description"] = description;
+                    oInParams["RestorePointType"] = 12; // MODIFY_SETTINGS
+                    oInParams["EventType"] = 100;
+                    oProcess.InvokeMethod("CreateRestorePoint", oInParams, null);
+                }
+                _OutPut($"Restore point '{description}' created successfully.");
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"WMI CreateRestorePoint failed ({ex.Message}), trying PowerShell Checkpoint-Computer...", LogLevel.Warning);
+                try
+                {
+                    ProcStartargs("powershell.exe", $"-NoLogo -NoProfile -NonInteractive -Command \"Checkpoint-Computer -Description '{description}' -RestorePointType MODIFY_SETTINGS -ErrorAction Stop; 'PowerShell Checkpoint-Computer completed.'\"");
+                    _OutPut($"Restore point '{description}' created via PowerShell.");
+                }
+                catch (Exception psEx)
+                {
+                    _fatalErrors++;
+                    _errorsList.Add($"Error creating restore point: {psEx.Message}");
+                    _OutPut($"Error creating restore point: {psEx.Message}. (Fallback registry backup remains available).", LogLevel.Error);
+                }
+            }
+            finally
+            {
+                try
+                {
+                    using (var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                    using (var srKey = baseKey.OpenSubKey(srKeyPath, true))
+                    {
+                        if (srKey != null)
+                        {
+                            if (frequencyExisted && previousFrequency != null)
+                                srKey.SetValue("SystemRestorePointCreationFrequency", previousFrequency, RegistryValueKind.DWord);
+                            else
+                                srKey.DeleteValue("SystemRestorePointCreationFrequency", false);
+                        }
+                    }
+                }
+                catch { }
+            }
         }
 
         private static string GetWindowsBuildVersion()
@@ -572,15 +656,12 @@ namespace DWS_Lite
             {
                 try
                 {
-                    var restorepointName = $"DestroyWindowsSpying {DateTime.Now}";
-                    _OutPut($"Creating restore point {restorepointName}...");
+                    var restorepointName = $"DWS11 {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
                     CreateRestorePoint(restorepointName);
-                    _OutPut($"Restore point {restorepointName} created.");
                 }
-                    // ReSharper disable once UnusedVariable
                 catch (Exception ex)
                 {
-                    _OutPut("Error creating restore point.");
+                    _OutPut("Error creating restore point.", LogLevel.Error);
                     _OutPut(ex.Message, LogLevel.Debug);
                 }
             }
@@ -1043,7 +1124,7 @@ namespace DWS_Lite
         }
 
         // Windows 11 privacy/AI tweaks. Registry keys verified against the
-        // Win11Debloat project (2025). Only applied when build >= 22000.
+        // Win11Debloat and TBOK projects (2025/2026). Only applied when build >= 22000.
         private void ApplyWin11Tweaks()
         {
             try
@@ -1056,6 +1137,7 @@ namespace DWS_Lite
                 SetRegValueHklm(@"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", "1",
                     RegistryValueKind.DWord);
                 _OutPut("Windows 11: Copilot disabled.");
+
                 // ---- Recall / Windows AI (snapshots) ----
                 SetRegValueHkcu(@"Software\Policies\Microsoft\Windows\WindowsAI", "DisableAIDataAnalysis", "1",
                     RegistryValueKind.DWord);
@@ -1066,6 +1148,7 @@ namespace DWS_Lite
                 SetRegValueHklm(@"Software\Policies\Microsoft\Windows\WindowsAI", "TurnOffSavingSnapshots", "1",
                     RegistryValueKind.DWord);
                 _OutPut("Windows 11: Recall / AI data analysis disabled.");
+
                 // ---- Bing in Search + Cortana ----
                 SetRegValueHkcu(@"Software\Policies\Microsoft\Windows\Explorer", "DisableSearchBoxSuggestions", "1",
                     RegistryValueKind.DWord);
@@ -1074,14 +1157,24 @@ namespace DWS_Lite
                 SetRegValueHklm(@"Software\Policies\Microsoft\Windows\Windows Search", "CortanaConsent", "0",
                     RegistryValueKind.DWord);
                 _OutPut("Windows 11: Bing/Cortana in search disabled.");
-                // ---- Widgets (News and Interests) ----
+
+                // ---- Search WebView override (fast classic native search) ----
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "EnabledState", "1", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "EnabledStateOptions", "0", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "Variant", "0", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "VariantPayload", "0", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\FeatureManagement\Overrides\8\1694661260", "VariantPayloadKind", "0", RegistryValueKind.DWord);
+                _OutPut("Windows 11: Search WebView override configured for classic native search.");
+
+                // ---- Widgets (News and Interests) - board & lockscreen disabled ----
                 SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "AllowNewsAndInterests", "0",
                     RegistryValueKind.DWord);
-                SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "DisableWidgetsBoard", "0",
+                SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "DisableWidgetsBoard", "1",
                     RegistryValueKind.DWord);
-                SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "DisableWidgetsOnLockScreen", "0",
+                SetRegValueHklm(@"Software\Policies\Microsoft\Dsh", "DisableWidgetsOnLockScreen", "1",
                     RegistryValueKind.DWord);
                 _OutPut("Windows 11: Widgets disabled.");
+
                 // ---- Start menu / Explorer ads & suggestions ----
                 SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
                     "SubscribedContent-338388SpotlightEnabled", "0", RegistryValueKind.DWord);
@@ -1091,15 +1184,61 @@ namespace DWS_Lite
                     "SubscribedContent-353696Enabled", "0", RegistryValueKind.DWord);
                 SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
                     "SystemPaneSuggestionsEnabled", "0", RegistryValueKind.DWord);
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
+                    "RotatingLockScreenOverlayEnabled", "0", RegistryValueKind.DWord);
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager",
+                    "SoftLandingEnabled", "0", RegistryValueKind.DWord);
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced",
+                    "ShowSyncProviderNotifications", "0", RegistryValueKind.DWord);
                 _OutPut("Windows 11: Start/Explorer ads and suggestions disabled.");
+
+                // ---- Classic right-click context menu ----
+                SetRegValueHkcu(@"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32",
+                    null, "", RegistryValueKind.String);
+                _OutPut("Windows 11: Classic context menu restored.");
+
+                // ---- Taskbar 'End Task' right-click option ----
+                SetRegValueHkcu(@"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings",
+                    "TaskbarEndTask", "1", RegistryValueKind.DWord);
+                _OutPut("Windows 11: Taskbar 'End Task' right-click option enabled.");
+
                 // ---- AI service auto-start ----
                 SetRegValueHklm(@"SYSTEM\CurrentControlSet\Services\WSAIFabricSvc", "Start", "3",
                     RegistryValueKind.DWord);
                 _OutPut("Windows 11: AI fabric service set to manual start.");
+
                 // ---- Prevent auto BitLocker/device encryption (24H2) ----
                 SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\BitLocker", "PreventDeviceEncryption", "1",
                     RegistryValueKind.DWord);
                 _OutPut("Windows 11: auto device encryption prevention set.");
+
+                // ---- Disable WPBT execution (prevent motherboard firmware rootkit bloatware injection) ----
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\Session Manager", "DisableWpbtExecution", "1",
+                    RegistryValueKind.DWord);
+                _OutPut("Windows 11: WPBT OEM firmware execution blocked.");
+
+                // ---- OOBE Policies (Bypass mandatory online account and disable first logon privacy nag) ----
+                SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows\OOBE", "DisablePrivacyExperience", "1", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows\OOBE", "BypassNRO", "1", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows\OOBE", "SkipMachineOOBE", "1", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Policies\Microsoft\Windows\OOBE", "Protectyourpc", "3", RegistryValueKind.DWord);
+                _OutPut("Windows 11: OOBE privacy experience and online account requirement bypassed.");
+
+                // ---- Gaming & System Responsiveness ----
+                SetRegValueHklm(@"SYSTEM\CurrentControlSet\Control\GraphicsDrivers", "HWSchMode", "2", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\GameDVR\Graphics", "OptimizationsForWindowedGames", "1", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "NetworkThrottlingIndex", "4294967295", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile", "SystemResponsiveness", "10", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Priority", "6", RegistryValueKind.DWord);
+                SetRegValueHklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Scheduling Category", "Medium", RegistryValueKind.String);
+                SetRegValueHklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "SFIO Priority", "High", RegistryValueKind.String);
+                SetRegValueHklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games", "Latency Sensitive", "True", RegistryValueKind.String);
+                SetRegValueHkcu(@"Software\Microsoft\GameBar", "AutoGameModeEnabled", "1", RegistryValueKind.DWord);
+                _OutPut("Windows 11: Gaming optimizations (HAGS, Game Mode, MMCS responsiveness) applied.");
+
+                // ---- Multi-User & Default Profile Deployment (Sysprep / New Accounts) ----
+                ApplyDefaultProfileAndUserHives();
+
                 _OutPut("Windows 11 tweaks applied.");
             }
             catch (Exception ex)
@@ -1108,6 +1247,126 @@ namespace DWS_Lite
                 _OutPut(ex.Message, LogLevel.Debug);
                 _fatalErrors++;
                 _errorsList.Add($"Error applying Windows 11 tweaks. Message: {ex.Message}");
+            }
+        }
+
+        private void ApplyDefaultProfileAndUserHives()
+        {
+            try
+            {
+                _OutPut("Applying per-user tweaks to other active user hives...");
+                using (var usersRoot = RegistryKey.OpenBaseKey(RegistryHive.Users, RegistryView.Registry64))
+                {
+                    foreach (var sid in usersRoot.GetSubKeyNames())
+                    {
+                        if (sid.StartsWith("S-1-5-21-", StringComparison.OrdinalIgnoreCase) && !sid.EndsWith("_Classes", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                using (var userKey = usersRoot.OpenSubKey(sid, true))
+                                {
+                                    if (userKey != null)
+                                    {
+                                        ApplyUserTweaksToSubKey(userKey, $"User [{sid}]");
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _OutPut($"Notice: could not access hive {sid}: {ex.Message}", LogLevel.Debug);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"Notice: user hives enumeration skipped: {ex.Message}", LogLevel.Debug);
+            }
+
+            var defaultDat = Path.Combine(Environment.GetEnvironmentVariable("SystemDrive") ?? "C:", @"Users\Default\NTUSER.DAT");
+            if (File.Exists(defaultDat))
+            {
+                _OutPut("Mounting Default Profile (C:\\Users\\Default\\NTUSER.DAT) for future accounts...");
+                RunProcess("reg.exe", "unload HKU\\DWS_DefaultProfile", 5000);
+                var loadRc = RunProcess("reg.exe", $"load HKU\\DWS_DefaultProfile \"{defaultDat}\"", 10000);
+                if (loadRc == 0)
+                {
+                    try
+                    {
+                        using (var usersRoot = RegistryKey.OpenBaseKey(RegistryHive.Users, RegistryView.Registry64))
+                        using (var defHive = usersRoot.OpenSubKey("DWS_DefaultProfile", true))
+                        {
+                            if (defHive != null)
+                            {
+                                ApplyUserTweaksToSubKey(defHive, "Default Profile");
+                                _OutPut("Default User profile (new account template) updated successfully.");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _OutPut($"Warning: updating Default profile hive failed: {ex.Message}", LogLevel.Warning);
+                    }
+                    finally
+                    {
+                        RunProcess("reg.exe", "unload HKU\\DWS_DefaultProfile", 10000);
+                    }
+                }
+                else
+                {
+                    _OutPut($"Notice: reg load Default profile returned exit code {loadRc}.", LogLevel.Debug);
+                }
+            }
+        }
+
+        private void ApplyUserTweaksToSubKey(RegistryKey rootKey, string contextName)
+        {
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowCopilotButton", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot", 1, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Policies\Microsoft\Windows\WindowsAI", "DisableAIDataAnalysis", 1, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Policies\Microsoft\Windows\Explorer", "DisableSearchBoxSuggestions", 1, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SubscribedContent-338388SpotlightEnabled", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SubscribedContent-353694Enabled", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SubscribedContent-353696Enabled", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SystemPaneSuggestionsEnabled", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "RotatingLockScreenOverlayEnabled", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\ContentDeliveryManager", "SoftLandingEnabled", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "ShowSyncProviderNotifications", 0, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\TaskbarDeveloperSettings", "TaskbarEndTask", 1, RegistryValueKind.DWord, contextName);
+            SetSubKeyValue(rootKey, @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32", null, "", RegistryValueKind.String, contextName);
+            SetSubKeyValue(rootKey, @"Software\Microsoft\GameBar", "AutoGameModeEnabled", 1, RegistryValueKind.DWord, contextName);
+        }
+
+        private void SetSubKeyValue(RegistryKey root, string subPath, string valName, object val, RegistryValueKind kind, string contextName)
+        {
+            try
+            {
+                using (var key = root.CreateSubKey(subPath))
+                {
+                    if (key == null) return;
+                    var existing = key.GetValue(valName);
+                    var display = $"{contextName}\\{subPath}\\{(string.IsNullOrEmpty(valName) ? "(Default)" : valName)}";
+                    if (existing != null)
+                    {
+                        if (existing.ToString().Equals(val?.ToString() ?? "", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _OutPut($"MATCH: {display} == {val} [{kind}]", LogLevel.Debug);
+                            return;
+                        }
+                        key.SetValue(valName, val, kind);
+                        _OutPut($"CHANGE: {display}: {existing} -> {val} [{kind}]", LogLevel.Info);
+                    }
+                    else
+                    {
+                        key.SetValue(valName, val, kind);
+                        _OutPut($"CREATE: {display} = {val} [{kind}]", LogLevel.Info);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"ERROR: {contextName}\\{subPath}\\{valName}: {ex.Message}", LogLevel.Error);
             }
         }
 
@@ -1129,16 +1388,26 @@ namespace DWS_Lite
             packageNames = packageNames.Where(n => !ProtectedPackages.Contains(n, StringComparer.OrdinalIgnoreCase)).ToArray();
             if (packageNames.Length == 0) return;
             var namesList = string.Join(",", packageNames.Select(n => $"'{n}'"));
-            // PowerShell: exact match on Name, remove for every user + provisioned.
+            // PowerShell: exact match on Name, remove for every user + provisioned with live streaming feedback.
             var ps =
                 $"$n=@({namesList}); " +
                 "foreach($x in $n){" +
-                "Get-AppxPackage -AllUsers -Name $x -EA SilentlyContinue | Remove-AppxPackage -AllUsers -EA SilentlyContinue; " +
-                "Get-AppxPackage -Name $x -EA SilentlyContinue | Remove-AppxPackage -EA SilentlyContinue; " +
-                "Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object {$_.DisplayName -eq $x} | Remove-AppxProvisionedPackage -Online -EA SilentlyContinue" +
+                "Write-Output ('Checking Appx: ' + $x); " +
+                "$pkgs = @(Get-AppxPackage -AllUsers -Name $x -EA SilentlyContinue); " +
+                "if ($pkgs.Count -gt 0) { " +
+                "    foreach($p in $pkgs) { " +
+                "        Write-Output ('Removing installed: ' + $p.PackageFullName); " +
+                "        Remove-AppxPackage -Package $p.PackageFullName -AllUsers -EA SilentlyContinue; " +
+                "    } " +
+                "} else { Write-Output ('Appx not installed: ' + $x); } " +
+                "$prov = @(Get-AppxProvisionedPackage -Online -EA SilentlyContinue | Where-Object {$_.DisplayName -eq $x}); " +
+                "foreach($pr in $prov) { " +
+                "    Write-Output ('Removing provisioned: ' + $pr.PackageName); " +
+                "    Remove-AppxProvisionedPackage -Online -PackageName $pr.PackageName -EA SilentlyContinue; " +
+                "} " +
                 "}";
-            ProcStartargs("powershell", $"-NoProfile -ExecutionPolicy Bypass -Command \"{ps}\"");
-            _OutPut($"Delete apps ({logName}): {string.Join(", ", packageNames)}");
+            ProcStartargs("powershell.exe", $"-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{ps}\"");
+            _OutPut($"Completed app group cleanup ({logName}): {string.Join(", ", packageNames)}");
         }
 
         private void RemoveWindows10Apps()
@@ -2523,16 +2792,26 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
                     str = "[DEBUG] " + str;
                     break;
             }
-            File.WriteAllText(LogFileName, File.ReadAllText(LogFileName) + str + Environment.NewLine);
+            try
+            {
+                File.AppendAllText(LogFileName, str + Environment.NewLine, Encoding.UTF8);
+            }
+            catch { }
             Console.WriteLine(str);
-            LogOutputTextBox.Text += str + Environment.NewLine;
+            LogOutputTextBox.AppendText(str + Environment.NewLine);
+            LogOutputTextBox.ScrollToCaret();
         }
 
         private void OutPutSplitInvoke()
         {
-            var splittext = $"=========================={Environment.NewLine}";
-            File.WriteAllText(LogFileName, File.ReadAllText(LogFileName) + splittext);
-            LogOutputTextBox.Text += splittext;
+            var splittext = $"==========================" + Environment.NewLine;
+            try
+            {
+                File.AppendAllText(LogFileName, splittext, Encoding.UTF8);
+            }
+            catch { }
+            LogOutputTextBox.AppendText(splittext);
+            LogOutputTextBox.ScrollToCaret();
         }
 
         #endregion
@@ -2582,41 +2861,92 @@ Are you sure?", @"Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == 
 
         private void SetRegValueHkcu(string regkeyfolder, string paramname, string paramvalue, RegistryValueKind keytype)
         {
-            var registryKey = Registry.CurrentUser.CreateSubKey(regkeyfolder);
-            registryKey?.Close();
-            var myKey = Registry.CurrentUser.OpenSubKey(regkeyfolder, RegistryKeyPermissionCheck.ReadWriteSubTree,
-                RegistryRights.FullControl);
-            try
-            {
-                myKey?.SetValue(paramname, paramvalue, keytype);
-            }
-            catch (Exception ex)
-            {
-                _fatalErrors++;
-                _errorsList.Add($"Error SetRegValueHkcu. Message: {ex.Message}");
-                _OutPut($"{GetTranslateText("Error")}: {ex.Message}", LogLevel.Error);
-            }
-
-            myKey?.Close();
+            SetRegValueCore(RegistryHive.CurrentUser, regkeyfolder, paramname, paramvalue, keytype);
         }
 
         private void SetRegValueHklm(string regkeyfolder, string paramname, string paramvalue, RegistryValueKind keytype)
         {
-            var registryKey = Registry.LocalMachine.CreateSubKey(regkeyfolder);
-            registryKey?.Close();
-            var myKey = Registry.LocalMachine.OpenSubKey(regkeyfolder,
-                RegistryKeyPermissionCheck.ReadWriteSubTree, RegistryRights.FullControl);
+            SetRegValueCore(RegistryHive.LocalMachine, regkeyfolder, paramname, paramvalue, keytype);
+        }
+
+        private void SetRegValueCore(RegistryHive hive, string regkeyfolder, string paramname, string paramvalue, RegistryValueKind keytype)
+        {
             try
             {
-                myKey?.SetValue(paramname, paramvalue, keytype);
+                using (var baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64))
+                using (var key = baseKey.CreateSubKey(regkeyfolder))
+                {
+                    if (key == null)
+                    {
+                        _fatalErrors++;
+                        _errorsList.Add($"Could not open or create key {hive}\\{regkeyfolder}");
+                        _OutPut($"ERROR: Cannot open key {hive}\\{regkeyfolder}", LogLevel.Error);
+                        return;
+                    }
+
+                    object targetValue = paramvalue;
+                    if (keytype == RegistryValueKind.DWord)
+                    {
+                        int intVal;
+                        if (int.TryParse(paramvalue, out intVal))
+                            targetValue = intVal;
+                        else
+                        {
+                            try { targetValue = Convert.ToInt32(paramvalue); } catch { }
+                        }
+                    }
+                    else if (keytype == RegistryValueKind.QWord)
+                    {
+                        long longVal;
+                        if (long.TryParse(paramvalue, out longVal))
+                            targetValue = longVal;
+                        else
+                        {
+                            try { targetValue = Convert.ToInt64(paramvalue); } catch { }
+                        }
+                    }
+
+                    var existing = key.GetValue(paramname);
+                    var targetDesc = $"{hive}\\{regkeyfolder}\\{(string.IsNullOrEmpty(paramname) ? "(Default)" : paramname)}";
+
+                    if (existing != null)
+                    {
+                        bool match = false;
+                        if (keytype == RegistryValueKind.DWord || keytype == RegistryValueKind.QWord)
+                        {
+                            long existingNum, targetNum;
+                            if (long.TryParse(existing.ToString(), out existingNum) && long.TryParse(paramvalue, out targetNum))
+                            {
+                                match = (existingNum == targetNum);
+                            }
+                        }
+                        else
+                        {
+                            match = string.Equals(existing.ToString(), paramvalue ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+                        }
+
+                        if (match)
+                        {
+                            _OutPut($"MATCH: {targetDesc} == {paramvalue} [{keytype}]", LogLevel.Debug);
+                            return;
+                        }
+
+                        key.SetValue(paramname, targetValue, keytype);
+                        _OutPut($"CHANGE: {targetDesc}: {existing} -> {paramvalue} [{keytype}]", LogLevel.Info);
+                    }
+                    else
+                    {
+                        key.SetValue(paramname, targetValue, keytype);
+                        _OutPut($"CREATE: {targetDesc} = {paramvalue} [{keytype}]", LogLevel.Info);
+                    }
+                }
             }
             catch (Exception ex)
             {
                 _fatalErrors++;
-                _errorsList.Add($"Error SetRegValueHklm. Message: {ex.Message}");
-                _OutPut($"{GetTranslateText("Error")}: {ex.Message}", LogLevel.Error);
+                _errorsList.Add($"Error SetRegValue ({hive}\\{regkeyfolder}\\{paramname}): {ex.Message}");
+                _OutPut($"ERROR: {hive}\\{regkeyfolder}\\{paramname} [{keytype}]: {ex.Message}", LogLevel.Error);
             }
-            myKey?.Close();
         }
 
         #endregion

@@ -124,6 +124,31 @@ build is **done**, **compiles clean** (0 errors, 0 warnings) and is committed on
 - [x] `lang/lt-LT.resx` is Lithuanian throughout: the legacy Dutch entries were
       replaced in `1154398`.
 
+### Real-Time Console, System Restore & Modern Win11 Engine (TBOK-Inspired)
+
+- [x] **Real-time streamed console output**: Subprocesses (`ProcStartargs`) stream stdout
+      and stderr asynchronously line-by-line into the UI without freezing. Removed legacy
+      Russian OEM 866 encoding, switched to UTF-8.
+- [x] **Atomic, zero-lag logging**: Replaced quadratic file re-reading (`ReadAllText + WriteAllText`)
+      with `File.AppendAllText` and native WinForms `TextBox.AppendText` with auto-scroll.
+- [x] **Granular registry operation reporting**: Query-before-write logic that reports exact
+      operation status (`MATCH`, `CREATE`, `CHANGE`, `ERROR`) across all tweaks.
+- [x] **Bulletproof System Restore engine**: Auto-enables protection on `%SystemDrive%`,
+      ensures `VSS` and `swprv` services are ready, temporarily overrides Windows 24-hour
+      frequency limit (`SystemRestorePointCreationFrequency = 0`), and provides automatic
+      fallback to PowerShell `Checkpoint-Computer` and full registry backups.
+- [x] **Multi-user & Sysprep template deployment**: Mounts `C:\Users\Default\NTUSER.DAT`
+      via `reg.exe load/unload` to bake privacy and debloat policies into all future user accounts,
+      and iterates active loaded user hives (`HKU\S-1-5-21-*`).
+- [x] **Modern Windows 11 tweaks & fixes**:
+      - Block ACPI WPBT execution (stops motherboard firmware bloatware auto-injection).
+      - Search WebView override (`FeatureManagement\Overrides\8\1694661260`): restores fast native search.
+      - Fixed Widgets policy bug (properly sets `DisableWidgetsBoard = 1` and `DisableWidgetsOnLockScreen = 1`).
+      - OOBE policies (`DisablePrivacyExperience`, `BypassNRO`, `Protectyourpc = 3`).
+      - Gaming & MMCS tuning (HAGS mode 2, Windowed Games Optimization, network throttling disabled, SystemResponsiveness = 10, Game Mode).
+      - BitLocker guard: checks protection status before altering BCD/boot policies.
+      - Added all 24 new registry keys to `RegistryBackup.TweakedValues` for 100% rollback compatibility.
+
 ---
 
 ## Still to do
