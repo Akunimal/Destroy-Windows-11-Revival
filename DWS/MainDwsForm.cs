@@ -13,7 +13,11 @@ using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using DWS.Core;
+using DWS.Core.Logging;
+using DWS.Core.Security;
 using DWS_Lite.lang;
 using DWS_Lite.lib;
 using DWS_Lite.Properties;
@@ -48,6 +52,12 @@ namespace DWS_Lite
         // Windows 11's dark title bar, and the user asked for the app to open in dark.
         private bool _win11DarkTheme = true;
 
+        private CancellationTokenSource _pipelineCts;
+        private ThemedButton btnAbort;
+        private ThemedButton btnDryRun;
+        private ThemedButton btnInstallWatchdog;
+        private ThemedButton btnUninstallWatchdog;
+
         public MainDwsForm(string[] args)
         {
 
@@ -57,6 +67,7 @@ namespace DWS_Lite
             RecreateLogFile(LogFileName);
             // Check windows version
             CheckWindowsVersion();
+            InitializeEnterpriseControls();
             // Bigger window and text on Windows 11 only; Windows 7/8/10 keep the original size.
             if (_win11)
             {
@@ -386,9 +397,235 @@ namespace DWS_Lite
             checkBoxCreateSystemRestorePoint.Enabled = false;
         }
 
+        private void InitializeEnterpriseControls()
+        {
+            try
+            {
+                // Resize primary action button to accommodate Dry-Run simulation and Abort controls on top row
+                btnDestroyWindowsSpying.Size = new Size(270, 50);
+
+                // Dry-Run Simulation Button
+                btnDryRun = new ThemedButton
+                {
+                    Name = "btnDryRun",
+                    Text = "Simular\n(Dry-Run)",
+                    Size = new Size(82, 50),
+                    Location = new Point(283, 6),
+                    Font = new Font("Tahoma", 8.5f, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+                btnDryRun.Click += (s, e) => ExecuteEnterprisePipelineAsync(true);
+                tabPageMain.Controls.Add(btnDryRun);
+
+                // Abort / KTM Kernel Rollback Button
+                btnAbort = new ThemedButton
+                {
+                    Name = "btnAbort",
+                    Text = "Abortar\n(KTM)",
+                    Size = new Size(74, 50),
+                    Location = new Point(368, 6),
+                    Font = new Font("Tahoma", 8.5f, FontStyle.Bold),
+                    Cursor = Cursors.Hand,
+                    Enabled = false,
+                    ForeColor = Color.Crimson
+                };
+                btnAbort.Click += btnAbort_Click;
+                tabPageMain.Controls.Add(btnAbort);
+
+                // Watchdog persistence management in Utilities tab
+                btnInstallWatchdog = new ThemedButton
+                {
+                    Name = "btnInstallWatchdog",
+                    Text = "Install Watchdog (WU Event 19)",
+                    Size = new Size(202, 26),
+                    Location = new Point(8, 235),
+                    Cursor = Cursors.Hand
+                };
+                btnInstallWatchdog.Click += btnInstallWatchdog_Click;
+                tabPageUtilites.Controls.Add(btnInstallWatchdog);
+
+                btnUninstallWatchdog = new ThemedButton
+                {
+                    Name = "btnUninstallWatchdog",
+                    Text = "Uninstall Watchdog",
+                    Size = new Size(214, 26),
+                    Location = new Point(223, 235),
+                    Cursor = Cursors.Hand
+                };
+                btnUninstallWatchdog.Click += btnUninstallWatchdog_Click;
+                tabPageUtilites.Controls.Add(btnUninstallWatchdog);
+            }
+            catch (Exception ex)
+            {
+                _OutPut($"Error initializing enterprise controls: {ex.Message}", LogLevel.Error);
+            }
+        }
+
         private void btnDestroyWindowsSpying_Click(object sender, EventArgs e)
         {
-            StartDestroyWindowsSpying();
+            btnApplyOptimizations_Click(sender, e);
+        }
+
+        public Task<PipelineResult> btnApplyOptimizations_Click(object sender, EventArgs e)
+        {
+            return ExecuteEnterprisePipelineAsync(false);
+        }
+
+        private void btnAbort_Click(object sender, EventArgs e)
+        {
+            if (_pipelineCts != null && !_pipelineCts.IsCancellationRequested)
+            {
+                btnAbort.Enabled = false;
+                StatusCommandsLable.Text = "Abortando... Revirtiendo cambios transaccionales (KTM Rollback)...";
+                _OutPut("Abortando... Revirtiendo cambios transaccionales (KTM Rollback)...", LogLevel.Warning);
+                _pipelineCts.Cancel();
+            }
+        }
+
+        private void btnInstallWatchdog_Click(object sender, EventArgs e)
+        {
+            string msg;
+            if (SystemPrivilegeBroker.InstallWatchdog(out msg))
+            {
+                MessageBox.Show(msg, "Watchdog DWS Enterprise", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _OutPut(msg, LogLevel.Info);
+            }
+            else
+            {
+                MessageBox.Show("Error instalando Watchdog:\n" + msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _OutPut("Error instalando Watchdog: " + msg, LogLevel.Error);
+            }
+        }
+
+        private void btnUninstallWatchdog_Click(object sender, EventArgs e)
+        {
+            string msg;
+            if (SystemPrivilegeBroker.UninstallWatchdog(out msg))
+            {
+                MessageBox.Show(msg, "Watchdog DWS Enterprise", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                _OutPut(msg, LogLevel.Info);
+            }
+            else
+            {
+                MessageBox.Show("Error desinstalando Watchdog:\n" + msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _OutPut("Error desinstalando Watchdog: " + msg, LogLevel.Error);
+            }
+        }
+
+        private Task<PipelineResult> ExecuteEnterprisePipelineAsync(bool isDryRun)
+        {
+            _pipelineCts = new CancellationTokenSource();
+            btnDestroyWindowsSpying.Enabled = false;
+            if (btnDryRun != null) btnDryRun.Enabled = false;
+            if (btnAbort != null) btnAbort.Enabled = true;
+            EnableOrDisableTab(false);
+            ProgressBarStatus.Value = 0;
+
+            string modeStr = isDryRun ? "DRY-RUN (SIMULACIÓN)" : "EJECUCIÓN REAL (KTM + LGPO)";
+            _OutPut($"=== INICIANDO MOTOR EMPRESARIAL DWS 11 [{modeStr}] ===");
+
+            // Create restore point prior to real execution if requested
+            if (!isDryRun && checkBoxCreateSystemRestorePoint.Checked)
+            {
+                try
+                {
+                    var restorepointName = $"DWS11 {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
+                    CreateRestorePoint(restorepointName);
+                }
+                catch (Exception ex)
+                {
+                    _OutPut("Error creando punto de restauración: " + ex.Message, LogLevel.Warning);
+                }
+            }
+
+            var progress = new DWS.Core.Progress<PipelineProgress>(p =>
+            {
+                if (p.PercentComplete >= 0 && p.PercentComplete <= 100)
+                {
+                    ProgressBarStatus.Value = p.PercentComplete;
+                }
+                StatusCommandsLable.Text = p.Message;
+                if (!string.IsNullOrEmpty(p.Message))
+                {
+                    LogLevel level = LogLevel.Info;
+                    if (p.LogLevel == JournalEntryType.Warning) level = LogLevel.Warning;
+                    else if (p.LogLevel == JournalEntryType.Error) level = LogLevel.Error;
+                    else if (p.LogLevel == JournalEntryType.Audit) level = LogLevel.Debug;
+                    _OutPut(p.Message, level);
+                }
+            });
+
+            var coordinator = new EnterprisePipelineCoordinator();
+            var task = coordinator.ExecuteEnterpriseBaselineAsync(null, isDryRun, _pipelineCts.Token, progress);
+
+            task.ContinueWith(t =>
+            {
+                btnDestroyWindowsSpying.Enabled = true;
+                if (btnDryRun != null) btnDryRun.Enabled = true;
+                if (btnAbort != null) btnAbort.Enabled = false;
+                EnableOrDisableTab(true);
+
+                if (t.IsFaulted)
+                {
+                    var ex = t.Exception != null ? t.Exception.InnerException : new Exception("Unknown error");
+                    _OutPut("Error crítico en Pipeline: " + ex.Message, LogLevel.Error);
+                    MessageBox.Show($"Pipeline execution failed:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                var result = t.Result;
+                if (result.AbortedByUser)
+                {
+                    _OutPut("Ejecución cancelada por el usuario. Rollback KTM ejecutado con éxito.", LogLevel.Warning);
+                    StatusCommandsLable.Text = "Cancelado por el usuario. Transacción revertida.";
+                    MessageBox.Show("Operación abortada por el usuario.\n\nLos cambios transaccionales del Registro han sido revertidos automáticamente a nivel de Kernel (KTM Rollback).", "DWS Enterprise", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+                else if (result.IsDryRun)
+                {
+                    _OutPut("Auditoría Dry-Run completada.", LogLevel.Info);
+                    StatusCommandsLable.Text = "Auditoría Dry-Run finalizada.";
+                    string jsonReport = result.AuditReport != null ? result.AuditReport.ToJson() : "{}";
+
+                    string summary = string.Format(
+                        "Resultados de la Auditoría Dry-Run:\n\n" +
+                        "• Reglas evaluadas: {0}\n" +
+                        "• Cambios pendientes detectados: {1}\n" +
+                        "• Claves ya conformes: {2}\n" +
+                        "• Nivel de riesgo estimado: {3}\n\n" +
+                        "¿Desea proceder con la APLICACIÓN REAL transaccionada ahora?",
+                        result.AuditReport.TotalRulesEvaluated,
+                        result.AuditReport.PendingChangesCount,
+                        result.AuditReport.CompliantRulesCount,
+                        result.AuditReport.OverallRiskLevel);
+
+                    var dr = MessageBox.Show(summary + "\n\n(Haga clic en 'Sí' para Aplicar ahora, 'No' para ver el JSON en la consola)",
+                        "Auditoría Dry-Run DWS 11", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+                    if (dr == DialogResult.Yes)
+                    {
+                        ExecuteEnterprisePipelineAsync(false);
+                    }
+                    else
+                    {
+                        _OutPut("=== REPORTE JSON DE AUDITORÍA DRY-RUN ===", LogLevel.Info);
+                        _OutPut(jsonReport, LogLevel.Debug);
+                    }
+                }
+                else if (result.Success)
+                {
+                    _OutPut("Optimización empresarial finalizada con 100% de integridad.", LogLevel.Info);
+                    StatusCommandsLable.Text = "Optimización empresarial completada.";
+                    MessageBox.Show("Optimización empresarial aplicada exitosamente.\n\n• Transacciones KTM: Confirmadas (Commit)\n• Políticas de grupo: Aplicadas mediante binario LGPO (registry.pol)\n• NTUSER.DAT: Desplegado en perfil por defecto\n\nSe recomienda reiniciar el equipo para completar la aplicación de directivas.", "DWS Enterprise", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    _OutPut("Pipeline finalizó con errores: " + result.ErrorMessage, LogLevel.Error);
+                    StatusCommandsLable.Text = "Error en optimización.";
+                    MessageBox.Show("La optimización finalizó con errores:\n" + result.ErrorMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }, TaskScheduler.FromCurrentSynchronizationContext());
+
+            return task;
         }
 
         private void Progressbaradd(int numberadd)

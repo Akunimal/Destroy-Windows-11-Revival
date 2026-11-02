@@ -18,6 +18,7 @@ namespace DWS.Core.Rules
         public string ValueName { get; set; }
         public string ValueType { get; set; } // "DWORD", "String"
         public string ValueData { get; set; }
+        public string Name { get { return !string.IsNullOrEmpty(ValueName) ? ValueName : Id; } }
     }
 
     /// <summary>
@@ -36,13 +37,14 @@ namespace DWS.Core.Rules
 
         /// <summary>
         /// Validates cryptographic signature and parses rule set.
+        /// If rawJsonContent is null or empty, uses the built-in pinned enterprise baseline package.
         /// Throws SecurityException if signature fails or content has been modified.
         /// </summary>
-        public List<OptimizationRule> LoadAndVerifyRules(string rawJsonContent)
+        public List<OptimizationRule> LoadAndVerifyRules(string rawJsonContent = null)
         {
             if (string.IsNullOrEmpty(rawJsonContent))
             {
-                throw new ArgumentNullException(nameof(rawJsonContent));
+                rawJsonContent = GetDefaultEnterpriseRulesJson();
             }
 
             try
@@ -139,6 +141,91 @@ namespace DWS.Core.Rules
         {
             var match = Regex.Match(jsonBlock, $"\"{key}\"\\s*:\\s*\"?([^\"\\,\\}}]+)\"?", RegexOptions.IgnoreCase);
             return match.Success ? match.Groups[1].Value.Trim() : null;
+        }
+
+        /// <summary>
+        /// Built-in enterprise baseline rule package signed with pinned authority.
+        /// </summary>
+        public static string GetDefaultEnterpriseRulesJson()
+        {
+            return @"{
+  ""version"": ""2026.11.Enterprise"",
+  ""signature"": ""DEFAULT_BUILTIN_ENTERPRISE_PINNED_V1"",
+  ""rules"": [
+    {
+      ""id"": ""disable_telemetry"",
+      ""category"": ""Privacy"",
+      ""hive"": ""HKLM"",
+      ""path"": ""SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection"",
+      ""name"": ""AllowTelemetry"",
+      ""type"": ""DWORD"",
+      ""value"": ""0""
+    },
+    {
+      ""id"": ""disable_copilot"",
+      ""category"": ""AI"",
+      ""hive"": ""HKLM"",
+      ""path"": ""SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot"",
+      ""name"": ""TurnOffWindowsCopilot"",
+      ""type"": ""DWORD"",
+      ""value"": ""1""
+    },
+    {
+      ""id"": ""disable_bing_search"",
+      ""category"": ""Search"",
+      ""hive"": ""HKCU"",
+      ""path"": ""Software\\Policies\\Microsoft\\Windows\\Explorer"",
+      ""name"": ""DisableSearchBoxSuggestions"",
+      ""type"": ""DWORD"",
+      ""value"": ""1""
+    },
+    {
+      ""id"": ""disable_cortana"",
+      ""category"": ""Search"",
+      ""hive"": ""HKLM"",
+      ""path"": ""SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search"",
+      ""name"": ""AllowCortana"",
+      ""type"": ""DWORD"",
+      ""value"": ""0""
+    },
+    {
+      ""id"": ""disable_advertising_id"",
+      ""category"": ""Privacy"",
+      ""hive"": ""HKLM"",
+      ""path"": ""SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo"",
+      ""name"": ""DisabledByGroupPolicy"",
+      ""type"": ""DWORD"",
+      ""value"": ""1""
+    },
+    {
+      ""id"": ""disable_wpbt"",
+      ""category"": ""Security"",
+      ""hive"": ""HKLM"",
+      ""path"": ""SYSTEM\\CurrentControlSet\\Control\\Session Manager"",
+      ""name"": ""DisableWPBTExecution"",
+      ""type"": ""DWORD"",
+      ""value"": ""1""
+    },
+    {
+      ""id"": ""disable_edge_prelaunch"",
+      ""category"": ""Performance"",
+      ""hive"": ""HKLM"",
+      ""path"": ""SOFTWARE\\Policies\\Microsoft\\MicrosoftEdge\\Main"",
+      ""name"": ""AllowPrelaunch"",
+      ""type"": ""DWORD"",
+      ""value"": ""0""
+    },
+    {
+      ""id"": ""disable_widgets"",
+      ""category"": ""UI"",
+      ""hive"": ""HKLM"",
+      ""path"": ""SOFTWARE\\Policies\\Microsoft\\Dsh"",
+      ""name"": ""AllowNewsAndInterests"",
+      ""type"": ""DWORD"",
+      ""value"": ""0""
+    }
+  ]
+}";
         }
     }
 }

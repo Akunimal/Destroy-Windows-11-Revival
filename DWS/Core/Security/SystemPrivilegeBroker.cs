@@ -149,6 +149,148 @@ namespace DWS.Core.Security
             }
         }
 
+        public const string WatchdogTaskName = "DWS_EnterpriseBaseline_Watchdog";
+
+        private const string WatchdogXmlTemplate =
+@"<?xml version=""1.0"" encoding=""UTF-16""?>
+<Task version=""1.2"" xmlns=""http://schemas.microsoft.com/windows/2004/02/mit/task"">
+  <RegistrationInfo>
+    <Description>DWS Enterprise Baseline Watchdog - Monitors Windows Update events to ensure optimization integrity.</Description>
+    <Author>DWS Enterprise</Author>
+  </RegistrationInfo>
+  <Triggers>
+    <EventTrigger>
+      <Enabled>true</Enabled>
+      <Subscription>&lt;QueryList&gt;&lt;Query Id=""0"" Path=""Microsoft-Windows-WindowsUpdateClient/Operational""&gt;&lt;Select Path=""Microsoft-Windows-WindowsUpdateClient/Operational""&gt;*[System[(EventID=19)]]&lt;/Select&gt;&lt;/Query&gt;&lt;/QueryList&gt;</Subscription>
+    </EventTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id=""Author"">
+      <UserId>S-1-5-18</UserId>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>false</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>true</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT1H</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context=""Author"">
+    <Exec>
+      <Command>{0}</Command>
+      <Arguments>/SILENT-AUDIT</Arguments>
+    </Exec>
+  </Actions>
+</Task>";
+
+        /// <summary>
+        /// Installs the Windows Update persistence watchdog scheduled task.
+        /// Runs as NT AUTHORITY\SYSTEM (S-1-5-18) triggered by Event ID 19 (Windows Update installation complete).
+        /// </summary>
+        public static bool InstallWatchdog(out string message)
+        {
+            message = string.Empty;
+            string currentExe = Process.GetCurrentProcess().MainModule.FileName;
+            string tempXmlPath = Path.Combine(Path.GetTempPath(), "DWS_Watchdog_" + Guid.NewGuid().ToString("N") + ".xml");
+
+            try
+            {
+                string xmlContent = string.Format(WatchdogXmlTemplate, EscapeXml(currentExe));
+                File.WriteAllText(tempXmlPath, xmlContent, Encoding.Unicode);
+
+                string createArgs = string.Format("/create /tn \"{0}\" /xml \"{1}\" /f", WatchdogTaskName, tempXmlPath);
+                int exitCode = RunHiddenProcess("schtasks.exe", createArgs, 10000);
+
+                if (exitCode == 0)
+                {
+                    TransactionJournal.Log(JournalEntryType.SecurityOperation, $"DWS Watchdog task '{WatchdogTaskName}' installed successfully.");
+                    message = "Watchdog task installed successfully (Trigger: Windows Update Event ID 19).";
+                    return true;
+                }
+                else
+                {
+                    message = $"schtasks returned error code {exitCode}";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                TransactionJournal.Log(JournalEntryType.Error, "Failed to install Watchdog task", ex);
+                message = ex.Message;
+                return false;
+            }
+            finally
+            {
+                try { if (File.Exists(tempXmlPath)) File.Delete(tempXmlPath); } catch { }
+            }
+        }
+
+        /// <summary>
+        /// Cleans up and uninstalls the persistence watchdog task.
+        /// </summary>
+        public static bool UninstallWatchdog(out string message)
+        {
+            message = string.Empty;
+            try
+            {
+                string deleteArgs = string.Format("/delete /tn \"{0}\" /f", WatchdogTaskName);
+                int exitCode = RunHiddenProcess("schtasks.exe", deleteArgs, 10000);
+                if (exitCode == 0)
+                {
+                    TransactionJournal.Log(JournalEntryType.SecurityOperation, $"DWS Watchdog task '{WatchdogTaskName}' deleted successfully.");
+                    message = "Watchdog task deleted successfully.";
+                    return true;
+                }
+                else
+                {
+                    message = $"schtasks returned error code {exitCode}";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                TransactionJournal.Log(JournalEntryType.Error, "Failed to uninstall Watchdog task", ex);
+                message = ex.Message;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Checks if the Watchdog scheduled task is currently registered.
+        /// </summary>
+        public static bool IsWatchdogInstalled()
+        {
+            try
+            {
+                int exitCode = RunHiddenProcess("schtasks.exe", $"/query /tn \"{WatchdogTaskName}\"", 5000);
+                return exitCode == 0;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string EscapeXml(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            return s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;").Replace("'", "&apos;");
+        }
+
         private static int RunHiddenProcess(string fileName, string args, int timeoutMs)
         {
             using (var proc = new Process

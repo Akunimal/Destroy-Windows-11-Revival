@@ -17,7 +17,8 @@ namespace DWS.Core.Logging
         TransactionRollback,
         RegistryOperation,
         PolicyOperation,
-        SecurityOperation
+        SecurityOperation,
+        Audit
     }
 
     public class JournalEventArgs : EventArgs
