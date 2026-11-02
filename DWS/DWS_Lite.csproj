@@ -169,6 +169,15 @@
 <Compile Include="Lib\ThemedCheckBox.cs" />
 <Compile Include="Lib\ToggleSwitch.cs" />
     <Compile Include="Lib\RegistryBackup.cs" />
+    <Compile Include="Core\Logging\TransactionJournal.cs" />
+    <Compile Include="Core\KTM\SafeTransactionHandle.cs" />
+    <Compile Include="Core\KTM\KtmTransactionManager.cs" />
+    <Compile Include="Core\Storage\OfflineHiveEditor.cs" />
+    <Compile Include="Core\Security\SystemPrivilegeBroker.cs" />
+    <Compile Include="Core\Policy\LGPOWriter.cs" />
+    <Compile Include="Core\Rules\SecureRuleEngine.cs" />
+    <Compile Include="Core\Security\BitLockerGuard.cs" />
+    <Compile Include="Core\EnterprisePipelineCoordinator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="lang\fa-IR.resx">
