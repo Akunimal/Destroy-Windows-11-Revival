@@ -1,15 +1,33 @@
 {
   "schemaVersion": "2.0.0",
-  "signature": "DEFAULT_BUILTIN_ENTERPRISE_PINNED_V2",
   "rules": [
+    {
+      "id": "create_restore_point",
+      "category": "General",
+      "displayName": "Crear punto de restauraci\u00F3n del sistema",
+      "description": "Crea un punto de restauraci\u00F3n del sistema mediante WMI/SR antes de aplicar cualquier optimizaci\u00F3n.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore",
+          "name": "SystemRestorePointCreationFrequency",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
     {
       "id": "disable_telemetry",
       "category": "Telemetry",
-      "displayName": "Disable Diagnostic Data Collection (Telemetry)",
-      "description": "Sets AllowTelemetry to 0 via Kernel Transaction and Group Policy (PReg1).",
+      "displayName": "Eliminar keylogger y telemetr\u00EDa de Windows",
+      "description": "Establece AllowTelemetry en 0 v\u00EDa KTM y Directiva de Grupo (LGPO) para detener la recolecci\u00F3n de diagn\u00F3sticos.",
       "minBuild": 19045,
       "requiresTrustedInstaller": false,
-      "isSelected": true,
       "operations": [
         {
           "type": "registry",
@@ -18,74 +36,254 @@
           "name": "AllowTelemetry",
           "kind": "DWord",
           "value": "0"
-        }
-      ]
-    },
-    {
-      "id": "disable_copilot",
-      "category": "AI",
-      "displayName": "Disable Windows Copilot",
-      "description": "Turns off Windows Copilot completely in user sessions.",
-      "minBuild": 22621,
-      "requiresTrustedInstaller": false,
-      "isSelected": true,
-      "operations": [
+        },
         {
           "type": "registry",
           "hive": "HKLM",
-          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot",
-          "name": "TurnOffWindowsCopilot",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection",
+          "name": "DoNotShowFeedbackNotifications",
           "kind": "DWord",
           "value": "1"
         }
-      ]
+      ],
+      "isSelected": true,
+      "isApplied": false
     },
     {
-      "id": "disable_bing_search",
-      "category": "Privacy",
-      "displayName": "Disable Bing Web Search in Start Menu",
-      "description": "Prevents Windows Search from sending queries to Bing over the internet.",
+      "id": "disable_keylogger",
+      "category": "Telemetry",
+      "displayName": "Desactivar registro de teclas y escritura manual",
+      "description": "Impide que Windows recolecte patrones de tipeo y trazos del l\u00E1piz para enviarlos a los servidores de Microsoft.",
       "minBuild": 19045,
       "requiresTrustedInstaller": false,
-      "isSelected": true,
       "operations": [
         {
           "type": "registry",
           "hive": "HKCU",
-          "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
-          "name": "DisableSearchBoxSuggestions",
+          "path": "Software\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitInkCollection",
           "kind": "DWord",
           "value": "1"
+        },
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\InputPersonalization",
+          "name": "RestrictImplicitTextCollection",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\InputPersonalization\\TrainedDataStore",
+          "name": "HarvestContacts",
+          "kind": "DWord",
+          "value": "0"
         }
-      ]
+      ],
+      "isSelected": true,
+      "isApplied": false
     },
     {
-      "id": "disable_cortana",
-      "category": "Privacy",
-      "displayName": "Disable Cortana Voice Assistant",
-      "description": "Disables Cortana integration and background indexing.",
+      "id": "disable_diagtrack_service",
+      "category": "Telemetry",
+      "displayName": "Desactivar servicios DiagTrack y dmwappushservice",
+      "description": "Detiene y deshabilita los servicios Connected User Experiences and Telemetry y WAP Push Service.",
       "minBuild": 19045,
       "requiresTrustedInstaller": false,
-      "isSelected": true,
       "operations": [
         {
           "type": "registry",
           "hive": "HKLM",
-          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
-          "name": "AllowCortana",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\DiagTrack",
+          "name": "Start",
+          "kind": "DWord",
+          "value": "4"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\dmwappushservice",
+          "name": "Start",
+          "kind": "DWord",
+          "value": "4"
+        },
+        {
+          "type": "service",
+          "serviceName": "DiagTrack",
+          "serviceStartMode": "Disabled"
+        },
+        {
+          "type": "service",
+          "serviceName": "dmwappushservice",
+          "serviceStartMode": "Disabled"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_ceip",
+      "category": "Telemetry",
+      "displayName": "Desactivar Programa de Mejora de la Experiencia (CEIP)",
+      "description": "Deshabilita el SQM Client (Software Quality Metrics) y la participaci\u00F3n en pruebas de telemetr\u00EDa de Windows.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\SQMClient\\Windows",
+          "name": "CEIPEnable",
           "kind": "DWord",
           "value": "0"
         }
-      ]
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_app_telemetry",
+      "category": "Telemetry",
+      "displayName": "Desactivar telemetr\u00EDa de compatibilidad de aplicaciones",
+      "description": "Desactiva el recopilador de inventario de programas y telemetr\u00EDa de compatibilidad de ejecutables.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppCompat",
+          "name": "AITEnable",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppCompat",
+          "name": "DisableInventory",
+          "kind": "DWord",
+          "value": "1"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "add_to_hosts",
+      "category": "Security",
+      "displayName": "Bloquear dominios esp\u00EDa en hosts y Firewall",
+      "description": "Redirige m\u00E1s de 200 dominios de recolecci\u00F3n de datos y rastreo de Microsoft a 0.0.0.0 en el archivo hosts.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters",
+          "name": "MaxCacheTtl",
+          "kind": "DWord",
+          "value": "86400"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Services\\Dnscache\\Parameters",
+          "name": "EnableAutoDoH",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "hosts",
+          "domains": [
+            "v10.events.data.microsoft.com",
+            "v20.events.data.microsoft.com",
+            "settings-win.data.microsoft.com",
+            "telemetry.microsoft.com",
+            "watson.telemetry.microsoft.com",
+            "diagnostics.support.microsoft.com",
+            "feedback.windows.com",
+            "telecommand.telemetry.microsoft.com",
+            "sqm.telemetry.microsoft.com",
+            "oca.telemetry.microsoft.com",
+            "watson.microsoft.com",
+            "redir.metaservices.microsoft.com",
+            "choice.microsoft.com",
+            "df.telemetry.microsoft.com",
+            "reports.wes.df.telemetry.microsoft.com",
+            "services.wes.df.telemetry.microsoft.com",
+            "sqm.df.telemetry.microsoft.com",
+            "watson.ppe.telemetry.microsoft.com",
+            "telemetry.appex.bing.net",
+            "telemetry.urs.microsoft.com",
+            "settings-sandbox.data.microsoft.com",
+            "v10.vortex-win.data.microsoft.com",
+            "v20.vortex-win.data.microsoft.com",
+            "activity.windows.com",
+            "browser.pipe.aria.microsoft.com"
+          ]
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_spy_tasks",
+      "category": "Security",
+      "displayName": "Desactivar tareas programadas de espionaje (SPY Tasks)",
+      "description": "Deshabilita tareas del Programador de Windows en Microsoft/Windows/Customer Experience Improvement y Application Experience.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache\\Tree\\Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator",
+          "name": "Id",
+          "kind": "String",
+          "value": "{00000000-0000-0000-0000-000000000000}"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_private_settings",
+      "category": "Privacy",
+      "displayName": "Desactivar configuraciones de privacidad invasivas",
+      "description": "Deshabilita el acceso en segundo plano de aplicaciones al micr\u00F3fono, c\u00E1mara, contactos y llamadas sin permiso expreso.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessBackgroundApps",
+          "kind": "DWord",
+          "value": "2"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy",
+          "name": "LetAppsAccessLocation",
+          "kind": "DWord",
+          "value": "2"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
     },
     {
       "id": "disable_advertising_id",
       "category": "Privacy",
-      "displayName": "Disable Advertising ID for User Tracking",
-      "description": "Disables personalized ad tracking identifier.",
+      "displayName": "Desactivar ID de publicidad para perfilado de usuario",
+      "description": "Impide que los anunciantes y aplicaciones rastreen el uso del sistema para mostrar publicidad dirigida.",
       "minBuild": 19045,
       "requiresTrustedInstaller": false,
-      "isSelected": true,
       "operations": [
         {
           "type": "registry",
@@ -95,35 +293,269 @@
           "kind": "DWord",
           "value": "1"
         }
-      ]
+      ],
+      "isSelected": true,
+      "isApplied": false
     },
     {
-      "id": "disable_wpbt",
-      "category": "Security",
-      "displayName": "Disable WPBT (Firmware Binary Injection)",
-      "description": "Blocks OEM firmware from injecting third-party executables during boot.",
+      "id": "disable_bing_search",
+      "category": "Privacy",
+      "displayName": "Desactivar b\u00FAsqueda en Bing en el Men\u00FA Inicio",
+      "description": "Evita que Windows Search env\u00EDe las consultas locales a internet y elimina las sugerencias web de Bing.",
       "minBuild": 19045,
       "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Policies\\Microsoft\\Windows\\Explorer",
+          "name": "DisableSearchBoxSuggestions",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+          "name": "BingSearchEnabled",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
       "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_cortana",
+      "category": "Privacy",
+      "displayName": "Desactivar asistente de voz Cortana",
+      "description": "Deshabilita completamente el asistente Cortana y sus conexiones en segundo plano.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
       "operations": [
         {
           "type": "registry",
           "hive": "HKLM",
-          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
-          "name": "DisableWPBTExecution",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "AllowCortana",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search",
+          "name": "CortanaConsent",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_activity_history",
+      "category": "Privacy",
+      "displayName": "Desactivar historial de actividad y Timeline",
+      "description": "Detiene la recolecci\u00F3n de las aplicaciones abiertas, p\u00E1ginas web y archivos visitados por el usuario.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "EnableActivityFeed",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "PublishUserActivities",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\System",
+          "name": "UploadUserActivities",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_location_tracking",
+      "category": "Privacy",
+      "displayName": "Desactivar rastreo de ubicaci\u00F3n del sistema",
+      "description": "Deshabilita el sensor de geolocalizaci\u00F3n global de Windows para todas las aplicaciones y servicios.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\LocationAndSensors",
+          "name": "DisableLocation",
           "kind": "DWord",
           "value": "1"
         }
-      ]
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_feedback_prompts",
+      "category": "Privacy",
+      "displayName": "Desactivar encuestas y notificaciones de comentarios",
+      "description": "Elimina las ventanas emergentes que solicitan calificar Windows o responder cuestionarios de satisfacci\u00F3n.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Siuf\\Rules",
+          "name": "NumberOfSIUFInPeriod",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "win11_copilot",
+      "category": "Windows 11",
+      "displayName": "Windows 11: Desactivar Windows Copilot",
+      "description": "Desactiva completamente Copilot en la barra de tareas y en directivas de usuario y equipo.",
+      "minBuild": 22621,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+          "name": "TurnOffWindowsCopilot",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "ShowCopilotButton",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "win11_recall",
+      "category": "Windows 11",
+      "displayName": "Windows 11: Desactivar Windows Recall y an\u00E1lisis de IA",
+      "description": "Bloquea la captura peri\u00F3dica de pantalla de Recall y el procesamiento de datos por IA en segundo plano.",
+      "minBuild": 26100,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "DisableAIDataAnalysis",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "AllowRecallEnablement",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI",
+          "name": "TurnOffSavingSnapshots",
+          "kind": "DWord",
+          "value": "1"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "win11_widgets",
+      "category": "Windows 11",
+      "displayName": "Windows 11: Desactivar Widgets y Noticias",
+      "description": "Deshabilita el proceso de widgets en la barra de tareas y la carga continua del feed de MSN Noticias.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Dsh",
+          "name": "AllowNewsAndInterests",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarDa",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "win11_webview_search",
+      "category": "Performance",
+      "displayName": "Windows 11: B\u00FAsqueda r\u00E1pida nativa (Bypass WebView2)",
+      "description": "Aplica override de FeatureManagement para sustituir la b\u00FAsqueda lenta de WebView2 por b\u00FAsqueda nativa C\u002B\u002B.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\FeatureManagement\\Overrides\\8\\1694661260",
+          "name": "EnabledState",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\FeatureManagement\\Overrides\\8\\1694661260",
+          "name": "EnabledStateOptions",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
     },
     {
       "id": "disable_edge_prelaunch",
       "category": "Performance",
-      "displayName": "Disable Microsoft Edge Background Prelaunch",
-      "description": "Stops Microsoft Edge from running in the background at startup.",
+      "displayName": "Desactivar pre-lanzamiento en segundo plano de Edge",
+      "description": "Evita que Microsoft Edge consuma CPU y memoria RAM iniciando procesos invisibles al encender el equipo.",
       "minBuild": 19045,
       "requiresTrustedInstaller": false,
-      "isSelected": true,
       "operations": [
         {
           "type": "registry",
@@ -133,26 +565,550 @@
           "kind": "DWord",
           "value": "0"
         }
-      ]
+      ],
+      "isSelected": true,
+      "isApplied": false
     },
     {
-      "id": "disable_widgets",
-      "category": "UI",
-      "displayName": "Disable Windows Widgets (News & Interests)",
-      "description": "Disables background widget feed processes and taskbar widget button.",
-      "minBuild": 22000,
+      "id": "disable_wpbt",
+      "category": "Security",
+      "displayName": "Desactivar WPBT (Inyecci\u00F3n de ejecutables por firmware OEM)",
+      "description": "Bloquea la tabla ACPI WPBT para que el BIOS/UEFI no pueda inyectar binarios en el arranque de Windows.",
+      "minBuild": 19045,
       "requiresTrustedInstaller": false,
-      "isSelected": true,
       "operations": [
         {
           "type": "registry",
           "hive": "HKLM",
-          "path": "SOFTWARE\\Policies\\Microsoft\\Dsh",
-          "name": "AllowNewsAndInterests",
+          "path": "SYSTEM\\CurrentControlSet\\Control\\Session Manager",
+          "name": "DisableWPBTExecution",
+          "kind": "DWord",
+          "value": "1"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "disable_delivery_optimization",
+      "category": "Performance",
+      "displayName": "Desactivar Optimizaci\u00F3n de Entrega P2P",
+      "description": "Impide que Windows Update use el ancho de banda de subida para compartir actualizaciones con otros PCs.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization",
+          "name": "DODownloadMode",
           "kind": "DWord",
           "value": "0"
         }
-      ]
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "set_default_photo_viewer",
+      "category": "General",
+      "displayName": "Restaurar Visor de Fotos cl\u00E1sico de Windows",
+      "description": "Habilita la asociaci\u00F3n de archivos (.jpg, .png, .bmp) con el cl\u00E1sico y r\u00E1pido photoviewer.dll de Windows 7.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows Photo Viewer\\Capabilities\\FileAssociations",
+          "name": ".jpg",
+          "kind": "String",
+          "value": "PhotoViewer.FileAssoc.Tiff"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Microsoft\\Windows Photo Viewer\\Capabilities\\FileAssociations",
+          "name": ".png",
+          "kind": "String",
+          "value": "PhotoViewer.FileAssoc.Tiff"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "win11_dark_mode",
+      "category": "General",
+      "displayName": "Activar Modo Oscuro en Windows 11",
+      "description": "Configura el tema oscuro para el sistema operativo y todas las aplicaciones compatibles.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+          "name": "AppsUseLightTheme",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+          "name": "SystemUsesLightTheme",
+          "kind": "DWord",
+          "value": "0"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_copilot",
+      "category": "Apps",
+      "displayName": "Eliminar Copilot, AI Hub y AI Provider",
+      "description": "Desinstala los paquetes AppX de Copilot y componentes de IA integrados de Windows.",
+      "minBuild": 22621,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsCopilot",
+          "name": "TurnOffWindowsCopilot",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.Copilot"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.Windows.AIHub"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.Windows.Ai.Copilot.Provider"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_teams",
+      "category": "Apps",
+      "displayName": "Eliminar Microsoft Teams (Personal / Chat)",
+      "description": "Desinstala la aplicaci\u00F3n Microsoft Teams integrada y elimina su icono de la barra de tareas.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarMn",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "MicrosoftTeams"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "MSTeams"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_outlook",
+      "category": "Apps",
+      "displayName": "Eliminar nuevo Outlook para Windows (WebView)",
+      "description": "Desinstala la versi\u00F3n web encapsulada de Outlook que reemplaz\u00F3 a Correo y Calendario.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableWindowsConsumerFeatures",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.OutlookForWindows"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_clipchamp",
+      "category": "Apps",
+      "displayName": "Eliminar Clipchamp Video Editor",
+      "description": "Desinstala el editor de video web Clipchamp de Microsoft.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableTailoredExperiencesWithDiagnosticData",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Clipchamp.Clipchamp"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_xbox",
+      "category": "Apps",
+      "displayName": "Eliminar Xbox, Game Bar y servicios asociados",
+      "description": "Desinstala Xbox App, Game Bar, Gaming Services y superposiciones en juegos de Microsoft.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "System\\GameConfigStore",
+          "name": "GameDVR_Enabled",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR",
+          "name": "AllowGameDVR",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "service",
+          "serviceName": "XblAuthManager",
+          "serviceStartMode": "Disabled"
+        },
+        {
+          "type": "service",
+          "serviceName": "XblGameSave",
+          "serviceStartMode": "Disabled"
+        },
+        {
+          "type": "service",
+          "serviceName": "XboxGipSvc",
+          "serviceStartMode": "Disabled"
+        },
+        {
+          "type": "service",
+          "serviceName": "XboxNetApiSvc",
+          "serviceStartMode": "Disabled"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.XboxApp"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.GamingApp"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.XboxGameOverlay"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.XboxGamingOverlay"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_solitaire",
+      "category": "Apps",
+      "displayName": "Eliminar Microsoft Solitaire Collection",
+      "description": "Desinstala la colecci\u00F3n de solitarios con publicidad integrada.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableThirdPartySuggestions",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.MicrosoftSolitaireCollection"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_bing",
+      "category": "Apps",
+      "displayName": "Eliminar Bing Noticias, Deportes, Finanzas y Clima",
+      "description": "Desinstala el paquete de aplicaciones de informaci\u00F3n y noticias de Bing.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableConsumerAccountStateContent",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingNews"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingWeather"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingFinance"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingSports"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingFoodAndDrink"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingHealthAndFitness"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingTravel"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingTranslator"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_people_onenote",
+      "category": "Apps",
+      "displayName": "Eliminar Contactos (People) y OneNote para Windows",
+      "description": "Desinstala las aplicaciones integradas de Contactos y la versi\u00F3n UWP de OneNote.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableSoftLanding",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.People"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.Office.OneNote"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.MicrosoftStickyNotes"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_3d",
+      "category": "Apps",
+      "displayName": "Eliminar 3D Builder, Visor 3D y Paint 3D",
+      "description": "Desinstala las herramientas de modelado e impresi\u00F3n 3D obsoletas de Windows.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableWindowsSpotlightFeatures",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.3DBuilder"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.Microsoft3DViewer"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.Print3D"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_zune",
+      "category": "Apps",
+      "displayName": "Eliminar Groove M\u00FAsica y Pel\u00EDculas y TV",
+      "description": "Desinstala los reproductores multimedia Zune/UWP antiguos de Windows.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Policies\\Microsoft\\Windows\\CurrentVersion\\PushNotifications",
+          "name": "NoToastApplicationNotification",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.ZuneMusic"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.ZuneVideo"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_win11_misc",
+      "category": "Apps",
+      "displayName": "Eliminar PC Manager, Get Started y Centro de Comentarios",
+      "description": "Desinstala aplicaciones promocionales, gu\u00EDas de inicio y recopiladores de retroalimentaci\u00F3n.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKLM",
+          "path": "SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent",
+          "name": "DisableWindowsTips",
+          "kind": "DWord",
+          "value": "1"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.PCManager"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.Getstarted"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.WindowsFeedbackHub"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.BingSearch"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "MicrosoftCorporationII.MicrosoftFamily"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "MicrosoftCorporationII.QuickAssist"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.PowerAutomateDesktop"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.MicrosoftOfficeHub"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_widgets",
+      "category": "Apps",
+      "displayName": "Eliminar Widgets y Web Experience Pack",
+      "description": "Desinstala el feed de noticias y widgets de la barra de tareas y el paquete Web Experience.",
+      "minBuild": 22000,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "registry",
+          "hive": "HKCU",
+          "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+          "name": "TaskbarDa",
+          "kind": "DWord",
+          "value": "0"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.WidgetsPlatformRuntime"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.StartExperiencesApp"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "MicrosoftWindows.Client.WebExperience"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
+    },
+    {
+      "id": "app_phone",
+      "category": "Apps",
+      "displayName": "Eliminar Enlace M\u00F3vil (Phone Link) y CrossDevice",
+      "description": "Desinstala Phone Link y el servicio CrossDevice de sincronizaci\u00F3n de smartphone.",
+      "minBuild": 19045,
+      "requiresTrustedInstaller": false,
+      "operations": [
+        {
+          "type": "appx",
+          "packagePattern": "Microsoft.YourPhone"
+        },
+        {
+          "type": "appx",
+          "packagePattern": "MicrosoftWindows.CrossDevice"
+        }
+      ],
+      "isSelected": true,
+      "isApplied": false
     }
-  ]
+  ],
+  "signature": "HC5XfzJztdXgo3e9jFNPGH3leDUvSbDUIUAJPiAGDG7QGgJkJHSQiMxiThqXeFIM76o\u002ButxuMWeTQqmzngkGROxWCvTc6InA6N7ZYNZdoi0iJFT/K1\u002BQDzgdo3n9XOyP/Xmp12DxM2vch5NAMn9vvvZmxch7uwyhukxIjOTIoHccAlAUd/I1bcDpguMlFO1KKl4LF0alxltlMaZGLutWAZXN56v24okf4h82rmrTfjmRQCZLf19Cl03wHUl5L06G04DflaQ7YFhQSg78y8fdThoknS2KXyb\u002BKOWOaYz/h\u002BcMDLmnS8T/eHB046ueYvITcETFt8q9eSJRnXrreMYDbZCfSY1Dler7JURZ71bpvcGj5FjzQMc8YGv3lLNu\u002B\u002BQjuol4Vh48bhx3pQix8LyDyKFIGs0XKJxP8yjQNAP1DK9vYYnrFWErE6DNB2kLVBR0zkjIaxQoOq6n3ZprvoPDNMnEnDA5PEbv\u002BI/9sAblll9Viq/ZT8R3DF7FnIqlOubEvLFqXQB9GJqtx7iRYjiSONU4i61NudGYf79QgO3kJWM\u002BiD0idItGI5nzKJ5Scn3YKNVUxU3I1yZwU\u002B9fK1GwNxlfLqGuN7hePfqavFiTzDSzDpi2leNWJocjwvc9M0vGSvACaMEhX5B\u002BTJW7j/LsUnSBn9MpxcdXZJadsgrcLus="
 }

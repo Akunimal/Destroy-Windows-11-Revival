@@ -1,4 +1,6 @@
+using System.IO.Pipes;
 using System.Net.Http.Json;
+using System.Security.Principal;
 using System.Text.Json;
 using DWS.Core;
 using DWS.Core.Json;
@@ -14,7 +16,7 @@ public class DashboardClient : IDisposable
     private readonly EnterprisePipelineCoordinator _localCoordinator;
     private readonly TransactionJournal _localJournal;
     private readonly SecureRuleEngine _localRuleEngine;
-    private const string BaseUrl = "http://localhost:5123";
+    public const string PipeName = "DWS11_Enterprise_IPC_v2";
 
     public DashboardClient(
         EnterprisePipelineCoordinator? localCoordinator = null,
@@ -25,11 +27,87 @@ public class DashboardClient : IDisposable
         _localJournal = localJournal ?? new TransactionJournal();
         _localRuleEngine = localRuleEngine ?? new SecureRuleEngine();
 
-        _httpClient = new HttpClient
+        _httpClient = CreatePipeHttpClient();
+    }
+
+    private static HttpClient CreatePipeHttpClient()
+    {
+        var pipeHandler = new SocketsHttpHandler
         {
-            BaseAddress = new Uri(BaseUrl),
+            ConnectCallback = async (_, cancellationToken) =>
+            {
+                var stream = new NamedPipeClientStream(
+                    serverName: ".",
+                    pipeName: PipeName,
+                    direction: PipeDirection.InOut,
+                    options: PipeOptions.Asynchronous | PipeOptions.WriteThrough,
+                    impersonationLevel: TokenImpersonationLevel.Identification);
+
+                await stream.ConnectAsync(cancellationToken).ConfigureAwait(false);
+                return stream;
+            }
+        };
+
+        var authHandler = new TokenAuthHandler(pipeHandler);
+        return new HttpClient(authHandler)
+        {
+            BaseAddress = new Uri("http://localhost"),
             Timeout = TimeSpan.FromMinutes(5)
         };
+    }
+
+    private sealed class TokenAuthHandler : DelegatingHandler
+    {
+        private static string? _cachedToken;
+
+        public TokenAuthHandler(HttpMessageHandler innerHandler) : base(innerHandler) { }
+
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            EnsureTokenHeader(request);
+            var response = await base.SendAsync(request, cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                // Reload token and retry once if Worker restarted with a new ephemeral token
+                ReloadToken();
+                EnsureTokenHeader(request);
+                response.Dispose();
+                response = await base.SendAsync(request, cancellationToken);
+            }
+
+            return response;
+        }
+
+        private static void EnsureTokenHeader(HttpRequestMessage request)
+        {
+            string? token = GetCurrentToken();
+            if (!string.IsNullOrEmpty(token))
+            {
+                request.Headers.Remove("X-DWS-IPC-Token");
+                request.Headers.Add("X-DWS-IPC-Token", token);
+            }
+        }
+
+        private static string? GetCurrentToken()
+        {
+            if (_cachedToken != null) return _cachedToken;
+            ReloadToken();
+            return _cachedToken;
+        }
+
+        private static void ReloadToken()
+        {
+            string tokenPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DWS", "ipc.token");
+            if (File.Exists(tokenPath))
+            {
+                try
+                {
+                    _cachedToken = File.ReadAllText(tokenPath).Trim();
+                }
+                catch { }
+            }
+        }
     }
 
     public async Task<SystemStatus?> GetStatusAsync()
@@ -83,14 +161,22 @@ public class DashboardClient : IDisposable
             var content = new StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
 
             var response = await _httpClient.PostAsync("/api/rules/apply", content, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                string errResp = await response.Content.ReadAsStringAsync(cancellationToken);
+                return new PipelineResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Worker error {(int)response.StatusCode}: {errResp}"
+                };
+            }
 
             string respString = await response.Content.ReadAsStringAsync(cancellationToken);
             return JsonSerializer.Deserialize(respString, DwsJsonContext.Default.PipelineResult);
         }
         catch (HttpRequestException)
         {
-            // Execute locally in-process
+            // Execute locally in-process when background worker is not running
             var pipeProgress = new Progress<PipelineProgress>(p =>
             {
                 progress?.Report($"[{p.LogLevel}] {p.Message}");

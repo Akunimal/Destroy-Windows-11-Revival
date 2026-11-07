@@ -27,4 +27,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="DWS.Core" />
+    <TrimmerRootAssembly Include="DWS.Worker" />
+  </ItemGroup>
 </Project>

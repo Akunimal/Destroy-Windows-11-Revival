@@ -1,0 +1,14 @@
+<Configuration>
+  <VGpu>Default</VGpu>
+  <Networking>Default</Networking>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>I:\WORK\DWS 11\Destroy-Windows-10-Spying\publish</HostFolder>
+      <SandboxFolder>C:\DWS_Host</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell.exe -ExecutionPolicy Bypass -NoProfile -Command "New-Item -ItemType Directory -Force -Path 'C:\DWS_Isolated'; Copy-Item -Path 'C:\DWS_Host\*' -Destination 'C:\DWS_Isolated' -Recurse -Force; Start-Process -FilePath 'C:\DWS_Isolated\gui\DWS.GUI.exe' -WorkingDirectory 'C:\DWS_Isolated\gui'"</Command>
+  </LogonCommand>
+</Configuration>

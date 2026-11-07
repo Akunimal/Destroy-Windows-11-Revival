@@ -1,12 +1,334 @@
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using Microsoft.Win32.SafeHandles;
 
 namespace DWS.Core.Security;
 
-public sealed class SystemPrivilegeBroker
+public sealed partial class SystemPrivilegeBroker
 {
     public const string WatchdogTaskName = "DWS_EnterpriseBaseline_Watchdog";
+    public const string TrustedInstallerServiceName = "TrustedInstaller";
+
+    private const uint SE_PRIVILEGE_ENABLED = 0x00000002;
+    private const uint TOKEN_ADJUST_PRIVILEGES = 0x0020;
+    private const uint TOKEN_QUERY = 0x0008;
+    private const uint TOKEN_DUPLICATE = 0x0002;
+    private const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+    private const uint SC_MANAGER_CONNECT = 0x0001;
+    private const uint SERVICE_START = 0x0010;
+    private const uint SERVICE_QUERY_STATUS = 0x0004;
+    private const uint SERVICE_RUNNING = 0x00000004;
+    private const uint SERVICE_STOPPED = 0x00000001;
+    private const uint MAXIMUM_ALLOWED = 0x02000000;
+    private const int SecurityImpersonation = 2;
+    private const int TokenImpersonation = 2;
+    private const int SC_STATUS_PROCESS_INFO = 0;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct LUID
+    {
+        public uint LowPart;
+        public int HighPart;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    private struct LUID_AND_ATTRIBUTES
+    {
+        public LUID Luid;
+        public uint Attributes;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    private struct TOKEN_PRIVILEGES
+    {
+        public uint PrivilegeCount;
+        public LUID_AND_ATTRIBUTES Privileges;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SERVICE_STATUS_PROCESS
+    {
+        public uint dwServiceType;
+        public uint dwCurrentState;
+        public uint dwControlsAccepted;
+        public uint dwWin32ExitCode;
+        public uint dwServiceSpecificExitCode;
+        public uint dwCheckPoint;
+        public uint dwWaitHint;
+        public uint dwProcessId;
+        public uint dwServiceFlags;
+    }
+
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool OpenProcessToken(IntPtr ProcessHandle, uint DesiredAccess, out SafeAccessTokenHandle TokenHandle);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool LookupPrivilegeValueW(string? lpSystemName, string lpName, out LUID lpLuid);
+
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool AdjustTokenPrivileges(
+        SafeAccessTokenHandle TokenHandle,
+        [MarshalAs(UnmanagedType.Bool)] bool DisableAllPrivileges,
+        in TOKEN_PRIVILEGES NewState,
+        uint BufferLength,
+        IntPtr PreviousState,
+        IntPtr ReturnLength);
+
+    [LibraryImport("advapi32.dll", EntryPoint = "OpenSCManagerW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial IntPtr OpenSCManager(string? lpMachineName, string? lpDatabaseName, uint dwDesiredAccess);
+
+    [LibraryImport("advapi32.dll", EntryPoint = "OpenServiceW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial IntPtr OpenService(IntPtr hSCManager, string lpServiceName, uint dwDesiredAccess);
+
+    [LibraryImport("advapi32.dll", EntryPoint = "StartServiceW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool StartService(IntPtr hService, uint dwNumServiceArgs, IntPtr lpServiceArgVectors);
+
+    [LibraryImport("advapi32.dll", EntryPoint = "QueryServiceStatusEx", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool QueryServiceStatusEx(
+        IntPtr hService,
+        int InfoLevel,
+        out SERVICE_STATUS_PROCESS lpBuffer,
+        uint cbBufSize,
+        out uint pcbBytesNeeded);
+
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseServiceHandle(IntPtr hSCObject);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial IntPtr GetCurrentProcess();
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    private static partial IntPtr OpenProcess(uint dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, uint dwProcessId);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool CloseHandle(IntPtr hObject);
+
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool DuplicateTokenEx(
+        SafeAccessTokenHandle hExistingToken,
+        uint dwDesiredAccess,
+        IntPtr lpTokenAttributes,
+        int ImpersonationLevel,
+        int TokenType,
+        out SafeAccessTokenHandle phNewToken);
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Privilege Elevation & Verification
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public bool IsRunningAsSystem()
+    {
+        try
+        {
+            using var identity = WindowsIdentity.GetCurrent();
+            return identity.IsSystem;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public bool IsRunningAsAdministrator()
+    {
+        try
+        {
+            using var identity = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool EnablePrivilege(string privilegeName, bool enable = true)
+    {
+        if (!OperatingSystem.IsWindows())
+            return false;
+
+        try
+        {
+            if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out var tokenHandle))
+            {
+                return false;
+            }
+
+            using (tokenHandle)
+            {
+                if (!LookupPrivilegeValueW(null, privilegeName, out var luid))
+                {
+                    return false;
+                }
+
+                var tp = new TOKEN_PRIVILEGES
+                {
+                    PrivilegeCount = 1,
+                    Privileges = new LUID_AND_ATTRIBUTES
+                    {
+                        Luid = luid,
+                        Attributes = enable ? SE_PRIVILEGE_ENABLED : 0
+                    }
+                };
+
+                bool success = AdjustTokenPrivileges(tokenHandle, false, in tp, 0, IntPtr.Zero, IntPtr.Zero);
+                return success && Marshal.GetLastPInvokeError() != 1300; // 1300 = ERROR_NOT_ALL_ASSIGNED
+            }
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool EnableProcessPrivileges()
+    {
+        bool dbg = EnablePrivilege("SeDebugPrivilege", true);
+        bool imp = EnablePrivilege("SeImpersonatePrivilege", true);
+        bool take = EnablePrivilege("SeTakeOwnershipPrivilege", true);
+        return dbg || imp || take;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TrustedInstaller Token Acquisition & Impersonation
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static SafeAccessTokenHandle CreateTrustedInstallerToken()
+    {
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException("TrustedInstaller elevation is only supported on Windows.");
+
+        // 1. Enable SeDebugPrivilege and SeImpersonatePrivilege
+        EnableProcessPrivileges();
+
+        // 2. Open SCM and get TrustedInstaller service
+        IntPtr hScm = OpenSCManager(null, null, SC_MANAGER_CONNECT);
+        if (hScm == IntPtr.Zero)
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to open Service Control Manager.");
+
+        try
+        {
+            IntPtr hService = OpenService(hScm, TrustedInstallerServiceName, SERVICE_START | SERVICE_QUERY_STATUS);
+            if (hService == IntPtr.Zero)
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to open TrustedInstaller service.");
+
+            try
+            {
+                // Query status
+                if (!QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, out var status, (uint)Marshal.SizeOf<SERVICE_STATUS_PROCESS>(), out _))
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to query TrustedInstaller service status.");
+
+                // If stopped, start service
+                if (status.dwCurrentState != SERVICE_RUNNING)
+                {
+                    if (!StartService(hService, 0, IntPtr.Zero))
+                    {
+                        int err = Marshal.GetLastPInvokeError();
+                        // 1056 = ERROR_SERVICE_ALREADY_RUNNING
+                        if (err != 0 && err != 1056)
+                        {
+                            // Continue to status polling as CBS or another process might have started it
+                        }
+                    }
+
+                    // Poll up to 5 seconds with 50ms backoff
+                    var sw = Stopwatch.StartNew();
+                    while (sw.ElapsedMilliseconds < 5000)
+                    {
+                        Thread.Sleep(50);
+                        if (QueryServiceStatusEx(hService, SC_STATUS_PROCESS_INFO, out status, (uint)Marshal.SizeOf<SERVICE_STATUS_PROCESS>(), out _)
+                            && status.dwCurrentState == SERVICE_RUNNING
+                            && status.dwProcessId != 0)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (status.dwCurrentState != SERVICE_RUNNING || status.dwProcessId == 0)
+                        throw new TimeoutException("Timed out waiting for TrustedInstaller service to start.");
+                }
+
+                uint tiPid = status.dwProcessId;
+
+                // 3. Open TrustedInstaller process
+                IntPtr hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, tiPid);
+                if (hProcess == IntPtr.Zero)
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), $"Failed to open TrustedInstaller process (PID {tiPid}).");
+
+                try
+                {
+                    // 4. Open its token
+                    if (!OpenProcessToken(hProcess, TOKEN_DUPLICATE | TOKEN_QUERY, out var hTiToken))
+                        throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to open TrustedInstaller process token.");
+
+                    using (hTiToken)
+                    {
+                        // 5. Duplicate token for impersonation
+                        if (!DuplicateTokenEx(hTiToken, MAXIMUM_ALLOWED, IntPtr.Zero, SecurityImpersonation, TokenImpersonation, out var hDupToken))
+                            throw new Win32Exception(Marshal.GetLastWin32Error(), "Failed to duplicate TrustedInstaller token.");
+
+                        return hDupToken;
+                    }
+                }
+                finally
+                {
+                    CloseHandle(hProcess);
+                }
+            }
+            finally
+            {
+                CloseServiceHandle(hService);
+            }
+        }
+        finally
+        {
+            CloseServiceHandle(hScm);
+        }
+    }
+
+    /// <summary>
+    /// Executes the specified action impersonating NT SERVICE\TrustedInstaller.
+    /// Thread-safe and AOT-safe with automatic ExecutionContext propagation via WindowsIdentity.RunImpersonated.
+    /// </summary>
+    public static void RunAsTrustedInstaller(Action action)
+    {
+        using var tiToken = CreateTrustedInstallerToken();
+        WindowsIdentity.RunImpersonated(tiToken, action);
+    }
+
+    /// <summary>
+    /// Executes the specified function impersonating NT SERVICE\TrustedInstaller.
+    /// </summary>
+    public static T RunAsTrustedInstaller<T>(Func<T> function)
+    {
+        using var tiToken = CreateTrustedInstallerToken();
+        return WindowsIdentity.RunImpersonated(tiToken, function);
+    }
+
+    /// <summary>
+    /// Executes the specified asynchronous function impersonating NT SERVICE\TrustedInstaller.
+    /// </summary>
+    public static Task RunAsTrustedInstallerAsync(Func<Task> function)
+    {
+        using var tiToken = CreateTrustedInstallerToken();
+        return WindowsIdentity.RunImpersonatedAsync(tiToken, function);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Watchdog Task Management
+    // ─────────────────────────────────────────────────────────────────────────
 
     private const string WatchdogXmlTemplate =
 """
@@ -55,19 +377,6 @@ public sealed class SystemPrivilegeBroker
   </Actions>
 </Task>
 """;
-
-    public bool IsRunningAsSystem()
-    {
-        try
-        {
-            using var identity = WindowsIdentity.GetCurrent();
-            return identity.IsSystem;
-        }
-        catch
-        {
-            return false;
-        }
-    }
 
     public bool InstallWatchdog(out string message)
     {

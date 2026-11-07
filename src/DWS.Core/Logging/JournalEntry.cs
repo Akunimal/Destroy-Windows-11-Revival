@@ -21,6 +21,11 @@ public class TransactionEntry
     public string? ServiceName { get; set; }
     public string? PreviousServiceStartMode { get; set; }
 
+    // Hosts y AppX
+    public string? PreviousHostsBlock { get; set; }
+    public string? PackagePattern { get; set; }
+    public List<string>? BlockedDomains { get; set; }
+
     public TransactionStatus Status { get; set; } = TransactionStatus.Applied;
 
     // UI helpers
@@ -48,7 +53,8 @@ public enum ChangeType
     RegistryDelete,
     ServiceConfig,
     LGPO,
-    AppxRemoval
+    AppxRemoval,
+    HostsModify
 }
 
 public enum TransactionStatus

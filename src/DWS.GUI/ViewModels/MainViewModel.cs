@@ -32,7 +32,7 @@ public partial class MainViewModel : ObservableObject
     private bool _isRunning;
 
     [ObservableProperty]
-    private string _dashboardUrl = "http://localhost:5123";
+    private string _dashboardUrl = @"\\.\pipe\DWS11_Enterprise_IPC_v2";
 
     [ObservableProperty]
     private string _workerStatus = "Desconocido";
@@ -87,6 +87,7 @@ public partial class MainViewModel : ObservableObject
             AvailableRules.Clear();
             FilteredRules.Clear();
             Categories.Clear();
+            Categories.Add("Todas las categorías");
 
             foreach (var rule in ruleSet.Rules)
             {
@@ -99,7 +100,8 @@ public partial class MainViewModel : ObservableObject
                 }
             }
 
-            StatusText = $"Cargadas {AvailableRules.Count} reglas";
+            SelectedCategory = "Todas las categorías";
+            StatusText = $"Cargadas {AvailableRules.Count} opciones de optimización";
         }
         catch (Exception ex)
         {
@@ -131,7 +133,7 @@ public partial class MainViewModel : ObservableObject
                 r.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (!string.IsNullOrWhiteSpace(SelectedCategory))
+        if (!string.IsNullOrWhiteSpace(SelectedCategory) && SelectedCategory != "Todas las categorías")
         {
             filtered = filtered.Where(r => r.Category == SelectedCategory);
         }
@@ -324,20 +326,28 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenDashboard()
+    private async Task OpenDashboardAsync()
     {
         try
         {
-            Process.Start(new ProcessStartInfo
+            if (DashboardUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             {
-                FileName = DashboardUrl,
-                UseShellExecute = true
-            });
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = DashboardUrl,
+                    UseShellExecute = true
+                });
+            }
+            else
+            {
+                await CopyDashboardUrlAsync();
+                StatusText = $"Canal seguro IPC activo: {DashboardUrl}";
+            }
         }
         catch (Exception ex)
         {
-            StatusText = $"Error al abrir dashboard: {ex.Message}";
-            _logger?.LogError(ex, "Failed to open dashboard");
+            StatusText = $"Error: {ex.Message}";
+            _logger?.LogError(ex, "Failed to interact with dashboard");
         }
     }
 

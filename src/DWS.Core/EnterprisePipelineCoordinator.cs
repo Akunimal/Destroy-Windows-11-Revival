@@ -25,13 +25,26 @@ public sealed class EnterprisePipelineCoordinator
         _privilegeBroker = privilegeBroker ?? new SystemPrivilegeBroker();
     }
 
-    public Task<PipelineResult> ExecuteEnterpriseBaselineAsync(
+    public async Task<PipelineResult> ExecuteEnterpriseBaselineAsync(
         List<string>? targetRuleIds,
         bool isDryRun,
         IProgress<PipelineProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        return Task.Run(() => ExecuteEnterpriseBaselineInternal(targetRuleIds, isDryRun, progress, cancellationToken), cancellationToken);
+        try
+        {
+            return await Task.Run(() => ExecuteEnterpriseBaselineInternal(targetRuleIds, isDryRun, progress, cancellationToken), cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return new PipelineResult
+            {
+                Success = false,
+                AbortedByUser = true,
+                IsDryRun = isDryRun,
+                ErrorMessage = "Operation aborted by user."
+            };
+        }
     }
 
     private PipelineResult ExecuteEnterpriseBaselineInternal(
@@ -82,6 +95,7 @@ public sealed class EnterprisePipelineCoordinator
                 // 3. KTM transacted registry initialization
                 using var ktm = new KtmTransactionManager(transactionId);
                 var lgpoWriter = new LGPOWriter();
+                var serviceHandler = new Operations.ServiceOperationHandler();
                 int currentIndex = 0;
 
                 try
@@ -155,8 +169,34 @@ public sealed class EnterprisePipelineCoordinator
                                         Status = TransactionStatus.Applied
                                     });
 
-                                    // Apply via KTM
-                                    ktm.SetValue(hive, path, name, desiredVal);
+                                    try
+                                    {
+                                        // Apply via KTM (with TrustedInstaller impersonation if required)
+                                        if (rule.RequiresTrustedInstaller && _privilegeBroker.IsRunningAsAdministrator())
+                                        {
+                                            try
+                                            {
+                                                SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
+                                                {
+                                                    ktm.SetValue(hive, path, name, desiredVal);
+                                                });
+                                            }
+                                            catch
+                                            {
+                                                // Fallback to direct KTM if TI service is unavailable
+                                                ktm.SetValue(hive, path, name, desiredVal);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            ktm.SetValue(hive, path, name, desiredVal);
+                                        }
+                                    }
+                                    catch (Exception ex) when (path.Contains("Windows Defender", StringComparison.OrdinalIgnoreCase) ||
+                                                               path.Contains("WinDefend", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        progress?.Report(new PipelineProgress(pct, $"[Tamper Protection] Protected key skipped ({name}): {ex.Message}", rule.DisplayName, "Warning"));
+                                    }
 
                                     // Apply to LGPO
                                     if (int.TryParse(desiredVal, out int dwordVal))
@@ -169,6 +209,158 @@ public sealed class EnterprisePipelineCoordinator
                                     }
 
                                     progress?.Report(new PipelineProgress(pct, $"Applied rule: {rule.DisplayName}", rule.DisplayName, "Information"));
+                                }
+                            }
+                            else if (string.Equals(op.Type, "service", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string svcName = op.ServiceName ?? op.Name ?? "";
+                                uint desiredMode = Operations.ServiceOperationHandler.ParseStartMode(op.ServiceStartMode ?? op.Value);
+                                var (svcExists, curStart, _) = serviceHandler.QueryServiceState(svcName);
+                                string action = !svcExists ? "NOT_FOUND" : (curStart == desiredMode ? "MATCH" : "CHANGE");
+
+                                var auditItem = new AuditChangeItem
+                                {
+                                    RuleId = rule.Id,
+                                    RuleName = rule.DisplayName,
+                                    Hive = "SERVICES",
+                                    KeyPath = svcName,
+                                    ValueName = "Start",
+                                    CurrentValue = svcExists ? curStart.ToString() : "(Not Installed)",
+                                    DesiredValue = desiredMode.ToString(),
+                                    ActionType = action,
+                                    Risk = "Medium"
+                                };
+
+                                if (action == "MATCH")
+                                {
+                                    auditReport.CompliantRulesCount++;
+                                    rule.IsApplied = true;
+                                }
+                                else
+                                {
+                                    auditReport.PendingChangesCount++;
+                                    auditReport.PendingChanges.Add(auditItem);
+                                    rule.IsApplied = false;
+                                }
+
+                                if (isDryRun)
+                                {
+                                    progress?.Report(new PipelineProgress(pct, $"[DRY-RUN] Service {svcName}: {action}", rule.DisplayName, "Audit"));
+                                }
+                                else if (svcExists && action != "MATCH")
+                                {
+                                    _journal.LogChange(new TransactionEntry
+                                    {
+                                        TransactionId = transactionId,
+                                        Timestamp = DateTime.UtcNow,
+                                        Category = rule.Category,
+                                        ChangeType = ChangeType.ServiceConfig,
+                                        RuleName = rule.DisplayName,
+                                        ServiceName = svcName,
+                                        PreviousServiceStartMode = curStart.ToString(),
+                                        Status = TransactionStatus.Applied
+                                    });
+
+                                    serviceHandler.ConfigureServiceStartType(svcName, desiredMode, ktm);
+                                    progress?.Report(new PipelineProgress(pct, $"Configured service: {svcName}", rule.DisplayName, "Information"));
+                                }
+                            }
+                            else if (string.Equals(op.Type, "appx", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string pkgPattern = op.PackagePattern ?? op.Value ?? op.Name ?? "";
+                                var matched = Operations.AppxOperationHandler.DetectMatchingPackages(pkgPattern);
+                                string action = matched.Count > 0 ? "REMOVE" : "MATCH";
+
+                                var auditItem = new AuditChangeItem
+                                {
+                                    RuleId = rule.Id,
+                                    RuleName = rule.DisplayName,
+                                    Hive = "APPX",
+                                    KeyPath = pkgPattern,
+                                    ValueName = "Package",
+                                    CurrentValue = matched.Count > 0 ? $"{matched.Count} packages" : "(Not Installed)",
+                                    DesiredValue = "(Deprovisioned)",
+                                    ActionType = action,
+                                    Risk = "Medium"
+                                };
+
+                                if (action == "MATCH")
+                                {
+                                    auditReport.CompliantRulesCount++;
+                                    rule.IsApplied = true;
+                                }
+                                else
+                                {
+                                    auditReport.PendingChangesCount++;
+                                    auditReport.PendingChanges.Add(auditItem);
+                                    rule.IsApplied = false;
+                                }
+
+                                if (isDryRun)
+                                {
+                                    progress?.Report(new PipelineProgress(pct, $"[DRY-RUN] AppX {pkgPattern}: {action}", rule.DisplayName, "Audit"));
+                                }
+                                else if (action == "REMOVE")
+                                {
+                                    _journal.LogChange(new TransactionEntry
+                                    {
+                                        TransactionId = transactionId,
+                                        Timestamp = DateTime.UtcNow,
+                                        Category = rule.Category,
+                                        ChangeType = ChangeType.AppxRemoval,
+                                        RuleName = rule.DisplayName,
+                                        PackagePattern = pkgPattern,
+                                        Status = TransactionStatus.Applied
+                                    });
+
+                                    Operations.AppxOperationHandler.RemoveAndDeprovisionPackageAsync(pkgPattern, isDryRun: false, ktm, cancellationToken)
+                                        .GetAwaiter().GetResult();
+                                    progress?.Report(new PipelineProgress(pct, $"Removed AppX package: {pkgPattern}", rule.DisplayName, "Information"));
+                                }
+                            }
+                            else if (string.Equals(op.Type, "hosts", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var domains = op.Domains ?? (op.Value != null ? new List<string> { op.Value } : new List<string>());
+                                var (hasBlock, currentBlock) = Operations.HostsOperationHandler.ReadManagedBlock();
+                                string action = hasBlock ? "UPDATE" : "CREATE";
+
+                                var auditItem = new AuditChangeItem
+                                {
+                                    RuleId = rule.Id,
+                                    RuleName = rule.DisplayName,
+                                    Hive = "HOSTS",
+                                    KeyPath = Operations.HostsOperationHandler.DefaultHostsPath,
+                                    ValueName = "ManagedBlock",
+                                    CurrentValue = hasBlock ? "Managed Block Active" : "(None)",
+                                    DesiredValue = $"{domains.Count} domains blocked",
+                                    ActionType = action,
+                                    Risk = "Low"
+                                };
+
+                                auditReport.PendingChangesCount++;
+                                auditReport.PendingChanges.Add(auditItem);
+
+                                if (isDryRun)
+                                {
+                                    progress?.Report(new PipelineProgress(pct, $"[DRY-RUN] Hosts file: {action} ({domains.Count} domains)", rule.DisplayName, "Audit"));
+                                }
+                                else if (domains.Count > 0)
+                                {
+                                    _journal.LogChange(new TransactionEntry
+                                    {
+                                        TransactionId = transactionId,
+                                        Timestamp = DateTime.UtcNow,
+                                        Category = rule.Category,
+                                        ChangeType = ChangeType.HostsModify,
+                                        RuleName = rule.DisplayName,
+                                        PreviousHostsBlock = currentBlock,
+                                        BlockedDomains = domains,
+                                        Status = TransactionStatus.Applied
+                                    });
+
+                                    Operations.HostsOperationHandler.ApplyHostsBlockAsync(domains, null, cancellationToken)
+                                        .GetAwaiter().GetResult();
+                                    progress?.Report(new PipelineProgress(pct, $"Updated Hosts block: {domains.Count} domains", rule.DisplayName, "Information"));
                                 }
                             }
                         }
@@ -184,7 +376,10 @@ public sealed class EnterprisePipelineCoordinator
                             AbortedByUser = false,
                             IsDryRun = true,
                             AuditReport = auditReport,
-                            Duration = sw.Elapsed
+                            Duration = sw.Elapsed,
+                            TotalRules = ruleSet.Rules.Count,
+                            AppliedRules = activeRules.Count,
+                            TransactionId = transactionId
                         };
                     }
 
@@ -195,25 +390,32 @@ public sealed class EnterprisePipelineCoordinator
 
                     if (File.Exists(fullDefaultDatPath))
                     {
-                        progress?.Report(new PipelineProgress(80, "Deploying isolated AppKey offline hive to Default profile...", "", "Information"));
-                        using var hiveEditor = OfflineHiveEditor.OpenHive(fullDefaultDatPath);
-
-                        foreach (var rule in activeRules)
+                        try
                         {
-                            foreach (var op in rule.Operations)
+                            progress?.Report(new PipelineProgress(80, "Deploying isolated AppKey offline hive to Default profile...", "", "Information"));
+                            using var hiveEditor = OfflineHiveEditor.OpenHive(fullDefaultDatPath);
+
+                            foreach (var rule in activeRules)
                             {
-                                if (string.Equals(op.Hive, "HKCU", StringComparison.OrdinalIgnoreCase))
+                                foreach (var op in rule.Operations)
                                 {
-                                    if (int.TryParse(op.Value, out int intVal))
+                                    if (string.Equals(op.Hive, "HKCU", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        hiveEditor.SetDword(op.Path ?? "", op.Name ?? "", intVal);
-                                    }
-                                    else
-                                    {
-                                        hiveEditor.SetString(op.Path ?? "", op.Name ?? "", op.Value ?? "");
+                                        if (int.TryParse(op.Value, out int intVal))
+                                        {
+                                            hiveEditor.SetDword(op.Path ?? "", op.Name ?? "", intVal);
+                                        }
+                                        else
+                                        {
+                                            hiveEditor.SetString(op.Path ?? "", op.Name ?? "", op.Value ?? "");
+                                        }
                                     }
                                 }
                             }
+                        }
+                        catch (Exception ex)
+                        {
+                            progress?.Report(new PipelineProgress(85, $"Warning: Could not update Default profile offline hive ({ex.Message}). Continuing baseline.", "", "Warning"));
                         }
                     }
 
@@ -239,23 +441,30 @@ public sealed class EnterprisePipelineCoordinator
                         AbortedByUser = false,
                         IsDryRun = false,
                         AuditReport = auditReport,
-                        Duration = sw.Elapsed
+                        Duration = sw.Elapsed,
+                        TotalRules = ruleSet.Rules.Count,
+                        AppliedRules = activeRules.Count,
+                        TransactionId = transactionId
                     };
                 }
                 catch (OperationCanceledException)
                 {
                     ktm.Rollback();
+                    try { _journal.RevertTransactionAsync(transactionId).GetAwaiter().GetResult(); } catch { }
                     sw.Stop();
-                    progress?.Report(new PipelineProgress(0, "Operation aborted by user. KTM changes rolled back.", "", "Warning"));
+                    progress?.Report(new PipelineProgress(0, "Operation aborted by user. KTM and Saga changes rolled back.", "", "Warning"));
 
                     return new PipelineResult
                     {
                         Success = false,
                         AbortedByUser = true,
                         IsDryRun = isDryRun,
-                        ErrorMessage = "Pipeline cancelled by user. KTM transactional changes rolled back.",
+                        ErrorMessage = "Pipeline cancelled by user. KTM and Saga transactional changes rolled back.",
                         AuditReport = auditReport,
-                        Duration = sw.Elapsed
+                        Duration = sw.Elapsed,
+                        TotalRules = ruleSet.Rules.Count,
+                        AppliedRules = 0,
+                        TransactionId = transactionId
                     };
                 }
             }

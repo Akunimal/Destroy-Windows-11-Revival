@@ -27,4 +27,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <ProjectReference Include="..\DWS.Core\DWS.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="DWS.Core" />
+    <TrimmerRootAssembly Include="DWS.GUI" />
+    <TrimmerRootAssembly Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
 </Project>

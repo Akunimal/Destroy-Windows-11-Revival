@@ -55,6 +55,9 @@ public class PipelineResult
     public string? ErrorMessage { get; set; }
     public AuditReport? AuditReport { get; set; }
     public TimeSpan Duration { get; set; }
+    public int TotalRules { get; set; }
+    public int AppliedRules { get; set; }
+    public string TransactionId { get; set; } = "";
 }
 
 public record SystemStatus(
@@ -66,4 +69,14 @@ public record SystemStatus(
     string BitLockerStatus
 );
 
-public record ApplyRulesRequest(List<string> RuleIds, bool DryRun);
+public record ApplyRulesRequest(
+    List<string>? RuleIds = null,
+    bool DryRun = false,
+    string? Profile = null
+);
+
+public record HealthResponse(
+    string Status,
+    string Os,
+    DateTime Timestamp
+);

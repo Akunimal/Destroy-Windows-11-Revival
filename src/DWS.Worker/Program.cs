@@ -4,9 +4,13 @@ using DWS.Core.Json;
 using DWS.Core.Logging;
 using DWS.Core.Rules;
 using DWS.Core.Security;
+using DWS.Worker.Security;
 using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateSlimBuilder(args);
+
+// Initialize secure IPC token in %ProgramData%\DWS\ipc.token
+IpcSecurity.InitializeSessionToken();
 
 // Verify minimum OS version: Windows 10 22H2 (build 19045)
 var osVersion = Environment.OSVersion.Version;
@@ -22,10 +26,10 @@ builder.Services.AddWindowsService(options =>
     options.ServiceName = "DWS Enterprise Worker";
 });
 
-// Configure Kestrel to listen only on localhost:5123
+// Configure Kestrel to listen exclusively on Named Pipe for secure local IPC
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Listen(IPAddress.Loopback, 5123);
+    options.ListenNamedPipe(IpcSecurity.PipeName);
 });
 
 // Native AOT Json source generation
@@ -46,6 +50,29 @@ builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 
 var app = builder.Build();
+
+// Apply strict Named Pipe SDDL permissions on startup
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    IpcSecurity.ApplyPipeSecurity();
+});
+
+// IPC Authorization Middleware: Enforce token validation on /api routes
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        if (!context.Request.Headers.TryGetValue(IpcSecurity.TokenHeaderName, out var token) ||
+            !IpcSecurity.ValidateToken(token))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync("{\"error\":\"Unauthorized IPC client: Invalid or missing token.\"}");
+            return;
+        }
+    }
+    await next();
+});
 
 // Global Exception Handler (Native AOT Safe - Direct UTF8 Output)
 app.UseExceptionHandler(exceptionHandlerApp =>
@@ -110,8 +137,8 @@ app.MapPost("/api/rules/apply", async (
     ILogger<Program> logger,
     CancellationToken cancellationToken) =>
 {
-    logger.LogInformation("Applying {Count} rules (DryRun: {DryRun})",
-        request.RuleIds.Count, request.DryRun);
+    logger.LogInformation("Applying rules (Count: {Count}, DryRun: {DryRun}, Profile: {Profile})",
+        request.RuleIds?.Count ?? 0, request.DryRun, request.Profile ?? "default");
 
     var progress = new Progress<PipelineProgress>(p =>
     {
@@ -185,6 +212,6 @@ app.MapPost("/api/watchdog/uninstall", (SystemPrivilegeBroker broker, ILogger<Pr
 });
 
 // Health check
-app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
+app.MapGet("/health", () => Results.Ok(new HealthResponse("healthy", Environment.OSVersion.VersionString, DateTime.UtcNow)));
 
 app.Run();

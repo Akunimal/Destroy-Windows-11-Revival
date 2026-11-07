@@ -12,24 +12,45 @@ public partial class App : Application
 
     public override void Initialize()
     {
+        Program.Log("App.Initialize started.");
         AvaloniaXamlLoader.Load(this);
+        Program.Log("App.Initialize completed.");
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
-        var services = new ServiceCollection();
-        ConfigureServices(services);
-        Services = services.BuildServiceProvider();
-
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        try
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = Services.GetRequiredService<ViewModels.MainViewModel>()
-            };
-        }
+            Program.Log("OnFrameworkInitializationCompleted started.");
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            Services = services.BuildServiceProvider();
 
-        base.OnFrameworkInitializationCompleted();
+            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                Program.Log("Creating MainWindow and resolving MainViewModel...");
+                var vm = Services.GetRequiredService<ViewModels.MainViewModel>();
+                Program.Log($"MainViewModel resolved. Rules count: {vm.AvailableRules.Count}");
+                var win = new MainWindow
+                {
+                    DataContext = vm
+                };
+                desktop.MainWindow = win;
+                Program.Log("desktop.MainWindow assigned.");
+                win.Show();
+                Program.Log("win.Show() called.");
+                win.Activate();
+                Program.Log("win.Activate() called.");
+            }
+
+            base.OnFrameworkInitializationCompleted();
+            Program.Log("OnFrameworkInitializationCompleted completed.");
+        }
+        catch (Exception ex)
+        {
+            Program.Log($"ERROR in OnFrameworkInitializationCompleted: {ex}");
+            throw;
+        }
     }
 
     private static void ConfigureServices(IServiceCollection services)

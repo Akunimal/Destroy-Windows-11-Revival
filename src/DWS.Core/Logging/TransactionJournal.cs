@@ -84,7 +84,8 @@ public class TransactionJournal
 
         try
         {
-            foreach (var entry in appliedEntries)
+            // Undo changes in reverse chronological order (LIFO) for transactional integrity
+            foreach (var entry in appliedEntries.AsEnumerable().Reverse())
             {
                 await RevertSingleEntryAsync(entry, ktm);
                 entry.Status = TransactionStatus.Reverted;
@@ -122,7 +123,8 @@ public class TransactionJournal
 
         try
         {
-            foreach (var entry in categoryEntries)
+            // Reverse chronological order (LIFO)
+            foreach (var entry in categoryEntries.AsEnumerable().Reverse())
             {
                 await RevertSingleEntryAsync(entry, ktm);
                 entry.Status = TransactionStatus.Reverted;
@@ -158,7 +160,8 @@ public class TransactionJournal
 
         try
         {
-            foreach (var entry in targetEntries)
+            // Reverse chronological order (LIFO)
+            foreach (var entry in targetEntries.AsEnumerable().Reverse())
             {
                 await RevertSingleEntryAsync(entry, ktm);
                 entry.Status = TransactionStatus.Reverted;
@@ -195,18 +198,23 @@ public class TransactionJournal
             case ChangeType.ServiceConfig:
                 if (!string.IsNullOrEmpty(entry.ServiceName) && !string.IsNullOrEmpty(entry.PreviousServiceStartMode))
                 {
-                    var psi = new ProcessStartInfo
-                    {
-                        FileName = "sc.exe",
-                        Arguments = $"config \"{entry.ServiceName}\" start= {entry.PreviousServiceStartMode}",
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    using var proc = Process.Start(psi);
-                    if (proc != null)
-                    {
-                        await proc.WaitForExitAsync();
-                    }
+                    var serviceHandler = new Operations.ServiceOperationHandler();
+                    uint startType = Operations.ServiceOperationHandler.ParseStartMode(entry.PreviousServiceStartMode);
+                    serviceHandler.ConfigureServiceStartType(entry.ServiceName, startType, ktm);
+                }
+                break;
+
+            case ChangeType.HostsModify:
+                if (string.IsNullOrEmpty(entry.PreviousHostsBlock))
+                {
+                    await Operations.HostsOperationHandler.RemoveHostsBlockAsync();
+                }
+                break;
+
+            case ChangeType.AppxRemoval:
+                if (!string.IsNullOrEmpty(entry.PackagePattern))
+                {
+                    Operations.AppxOperationHandler.RevertDeprovisioning(entry.PackagePattern);
                 }
                 break;
         }

@@ -56,14 +56,16 @@ public sealed partial class OfflineHiveEditor : IDisposable
     public void SetDword(string subKeyPath, string valueName, int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        using var key = _rootKey.CreateSubKey(subKeyPath, RegistryKeyPermissionCheck.ReadWriteSubTree);
+        using var key = _rootKey.CreateSubKey(subKeyPath, RegistryKeyPermissionCheck.ReadWriteSubTree)
+            ?? throw new InvalidOperationException($"Failed to create or open subkey '{subKeyPath}' in offline hive '{HiveFilePath}'.");
         key.SetValue(valueName, value, RegistryValueKind.DWord);
     }
 
     public void SetString(string subKeyPath, string valueName, string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        using var key = _rootKey.CreateSubKey(subKeyPath, RegistryKeyPermissionCheck.ReadWriteSubTree);
+        using var key = _rootKey.CreateSubKey(subKeyPath, RegistryKeyPermissionCheck.ReadWriteSubTree)
+            ?? throw new InvalidOperationException($"Failed to create or open subkey '{subKeyPath}' in offline hive '{HiveFilePath}'.");
         key.SetValue(valueName, value, RegistryValueKind.String);
     }
 

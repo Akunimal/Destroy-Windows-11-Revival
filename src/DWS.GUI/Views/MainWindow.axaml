@@ -3,13 +3,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:DWS.GUI.ViewModels"
+        xmlns:rules="using:DWS.Core.Rules"
+        xmlns:logging="using:DWS.Core.Logging"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="DWS.GUI.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="DWS 11 Enterprise v2.0"
         Width="1200" Height="800"
         MinWidth="900" MinHeight="600"
-        TransparencyLevelHint="Mica"
+        WindowStartupLocation="CenterScreen"
         Background="#1E1E1E">
 
   <DockPanel>
@@ -75,31 +77,39 @@
                   CornerRadius="8" 
                   Padding="10"
                   Margin="0,0,10,0">
-            <ListBox ItemsSource="{Binding FilteredRules}"
-                     SelectionMode="Multiple">
+            <ListBox x:Name="RulesListBox"
+                     ItemsSource="{Binding FilteredRules}"
+                     Background="#252528"
+                     CornerRadius="6">
               <ListBox.ItemTemplate>
-                <DataTemplate>
-                  <StackPanel Orientation="Horizontal" Spacing="10" Margin="5">
-                    <CheckBox IsChecked="{Binding IsSelected}"/>
-                    <StackPanel Spacing="3">
-                      <TextBlock Text="{Binding DisplayName}" 
-                                 FontWeight="SemiBold"
-                                 Foreground="White"/>
-                      <TextBlock Text="{Binding Description}" 
-                                 FontSize="12"
-                                 Foreground="#AAAAAA"
-                                 TextWrapping="Wrap"/>
-                      <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,5,0,0">
+                <DataTemplate x:DataType="rules:Rule">
+                  <Grid ColumnDefinitions="Auto,*" Margin="6,5">
+                    <CheckBox Grid.Column="0" 
+                              IsChecked="{Binding IsSelected}" 
+                              VerticalAlignment="Center" 
+                              Margin="0,0,12,0"/>
+                    <StackPanel Grid.Column="1" Spacing="3">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding DisplayName}" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="White" 
+                                   FontSize="13"/>
                         <Border Background="#0078D4" 
                                 CornerRadius="3" 
-                                Padding="6,2">
+                                Padding="6,1"
+                                VerticalAlignment="Center">
                           <TextBlock Text="{Binding Category}" 
                                      FontSize="10" 
+                                     FontWeight="Bold"
                                      Foreground="White"/>
                         </Border>
                       </StackPanel>
+                      <TextBlock Text="{Binding Description}" 
+                                 FontSize="11" 
+                                 Foreground="#AAAAAA" 
+                                 TextWrapping="Wrap"/>
                     </StackPanel>
-                  </StackPanel>
+                  </Grid>
                 </DataTemplate>
               </ListBox.ItemTemplate>
             </ListBox>
@@ -198,7 +208,7 @@
                       SelectedItem="{Binding SelectedTransaction}"
                       Width="400">
               <ComboBox.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="logging:TransactionHistoryItem">
                   <StackPanel Orientation="Horizontal" Spacing="10">
                     <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}"/>
                     <TextBlock Text="-"/>
@@ -229,7 +239,7 @@
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="x:String">
                   <Button Content="{Binding}"
                           Command="{Binding $parent[TabControl].((vm:MainViewModel)DataContext).RevertByCategoryCommand}"
                           CommandParameter="{Binding}"/>
@@ -247,7 +257,7 @@
             <ListBox ItemsSource="{Binding SelectedTransaction.Changes}"
                      SelectionMode="Multiple">
               <ListBox.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="logging:TransactionEntry">
                   <StackPanel Margin="5">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                       <CheckBox IsChecked="{Binding IsSelectedForRevert}"/>

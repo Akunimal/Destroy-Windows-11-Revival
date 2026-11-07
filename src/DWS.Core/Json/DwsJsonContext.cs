@@ -20,6 +20,7 @@ namespace DWS.Core.Json;
 [JsonSerializable(typeof(PipelineResult))]
 [JsonSerializable(typeof(SystemStatus))]
 [JsonSerializable(typeof(ApplyRulesRequest))]
+[JsonSerializable(typeof(HealthResponse))]
 [JsonSourceGenerationOptions(
     WriteIndented = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
