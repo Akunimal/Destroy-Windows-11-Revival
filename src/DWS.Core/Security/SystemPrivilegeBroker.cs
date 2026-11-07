@@ -34,14 +34,14 @@ public sealed partial class SystemPrivilegeBroker
         public int HighPart;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential)]
     private struct LUID_AND_ATTRIBUTES
     {
         public LUID Luid;
         public uint Attributes;
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    [StructLayout(LayoutKind.Sequential)]
     private struct TOKEN_PRIVILEGES
     {
         public uint PrivilegeCount;

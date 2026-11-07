@@ -121,8 +121,9 @@ public sealed partial class ServiceOperationHandler
                     {
                         if (QueryServiceConfig(hService, (IntPtr)buffer, bytesNeeded, out _))
                         {
-                            var config = Marshal.PtrToStructure<QUERY_SERVICE_CONFIGW>((IntPtr)buffer);
-                            return (true, config.dwStartType, isRunning);
+                            // dwStartType is at byte offset 4 of QUERY_SERVICE_CONFIGW (dwServiceType is 0..3)
+                            uint startType = *(uint*)((byte*)buffer + sizeof(uint));
+                            return (true, startType, isRunning);
                         }
                     }
                     finally

@@ -169,7 +169,7 @@ public static class IpcSecurity
         string StringSecurityDescriptor,
         uint StringSDRevision,
         out IntPtr SecurityDescriptor,
-        out ulong SecurityDescriptorSize);
+        out uint SecurityDescriptorSize);
 
     [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern uint SetNamedSecurityInfo(
