@@ -1,0 +1,28 @@
+<Configuration>
+  <VGpu>Enable</VGpu>
+  <Networking>Disable</Networking>
+  <MemoryInMB>4096</MemoryInMB>
+  <MappedFolders>
+    <!-- 1. Binarios compilados (Solo lectura) -->
+    <MappedFolder>
+      <HostFolder>D:\WORK\DWS 11\Destroy-Windows-10-Spying\dist</HostFolder>
+      <SandboxFolder>C:\DWS_Dist</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <!-- 2. Scripts de prueba automatizada (Solo lectura) -->
+    <MappedFolder>
+      <HostFolder>D:\WORK\DWS 11\Destroy-Windows-10-Spying\sandbox-pipeline\scripts</HostFolder>
+      <SandboxFolder>C:\DWS_Scripts</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <!-- 3. Canal de retorno de logs y artefactos al Host (Lectura/Escritura) -->
+    <MappedFolder>
+      <HostFolder>D:\WORK\DWS 11\Destroy-Windows-10-Spying\sandbox-pipeline\artifacts</HostFolder>
+      <SandboxFolder>C:\DWS_Artifacts</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell.exe -ArgumentList '-NoExit -NoProfile -ExecutionPolicy Bypass -File C:\DWS_Scripts\Run-SandboxTests.ps1' -Verb RunAs"</Command>
+  </LogonCommand>
+</Configuration>

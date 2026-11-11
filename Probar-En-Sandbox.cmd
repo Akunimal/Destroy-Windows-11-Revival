@@ -1,4 +1,5 @@
 @echo off
 cd /d "%~dp0"
-echo Iniciando Windows Sandbox para DWS 11 Enterprise...
-start "" "DWS-Sandbox.wsb"
+echo Iniciando Pipeline de Verificacion en Windows Sandbox...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "sandbox-pipeline\Invoke-HostPipeline.ps1"
+pause
