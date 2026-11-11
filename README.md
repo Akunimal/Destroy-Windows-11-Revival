@@ -1,8 +1,8 @@
-# DWS 11 Enterprise v2.0 - Modern Architecture
+# DWS 11 Enterprise v2.1.0 - Modern Architecture
 
 Modern, high-performance system baseline enforcement and telemetry optimizer for **Windows 10 22H2+** and **Windows 11 (23H2 / 24H2+)**.
 
-Built with **.NET 8 (LTS)**, **C# 12**, **Native AOT**, **Avalonia UI 11.2** with Fluent Design & Mica, and background **Kestrel Minimal APIs**.
+Built with **.NET 8 (LTS)**, **C# 12**, **Self-Contained Single-File GUI**, **Avalonia UI 11.2** (Fluent Design & Mica), **KTM Transacted Registry Engine**, and background **Named Pipe IPC Broker**.
 
 ---
 
@@ -13,22 +13,23 @@ The solution `DWS.Enterprise.sln` is organized into three decoupled layers:
 ```
 DWS.Enterprise.sln
 ├── src/
-│   ├── DWS.Core/         # Enterprise Kernel logic (.NET 8 Windows, AOT)
+│   ├── DWS.Core/         # Enterprise Kernel logic (.NET 8 Windows, Embedded Rules)
 │   │   ├── KTM/          # Kernel Transaction Manager (ktmw32.dll & advapi32.dll)
 │   │   ├── Storage/      # Isolated RegLoadAppKey offline hives (Default NTUSER.DAT)
 │   │   ├── Security/     # SystemPrivilegeBroker & BitLockerGuard (TPM PCR guard)
 │   │   ├── Policy/       # Binary Group Policy generator (registry.pol PReg1 + gpupdate)
-│   │   ├── Rules/        # SecureRuleEngine with RSA-4096 signature verification
-│   │   ├── Logging/      # TransactionJournal with atomic .tmp file moves and category rollback
-│   │   └── Json/         # DwsJsonContext (System.Text.Json Source Generator for Native AOT)
-│   ├── DWS.Worker/       # SYSTEM background service with Kestrel Minimal APIs (localhost:5123)
-│   └── DWS.GUI/          # Modern Desktop UI built with Avalonia 11.2 (Fluent, Mica, MVVM)
+│   │   ├── Rules/        # SecureRuleEngine with RSA-4096 signature verification (37 embedded rules)
+│   │   ├── Logging/      # TransactionJournal in %ProgramData%\DWS\journal
+│   │   └── Json/         # DwsJsonContext (System.Text.Json Source Generator for AOT compatibility)
+│   ├── DWS.GUI/          # Self-Contained Single-File GUI (Avalonia 11.2, requireAdministrator, /SILENT-AUDIT)
+│   └── DWS.Worker/       # Privileged background service with Named Pipe IPC (\\.\pipe\DWS11_Enterprise_IPC_v2)
 ├── rules/
-│   └── rules.json        # Enterprise signed optimization policy rules
+│   ├── rules.json        # Enterprise signed optimization policy rules (37 rules)
+│   └── rules.json.sig    # RSA-4096 digital signature
 └── scripts/
     ├── build.cmd         # One-click restore & release compilation
-    ├── publish-aot.cmd   # Native AOT ahead-of-time publishing (win-x64)
-    └── sign-rules.ps1    # RSA-4096 rule signature tool
+    ├── publish.cmd       # Self-contained single-file publisher producing dist\DWS11-Enterprise-v*-win-x64.exe
+    └── run-tests.cmd     # Test suite execution
 ```
 
 ---
@@ -47,43 +48,50 @@ DWS.Enterprise.sln
    - Modifies `Users\Default\NTUSER.DAT` via `advapi32!RegLoadAppKey` in a private namespace without global registry pollution.
    - Ensures newly created user accounts inherit optimal settings from day one.
 
-4. **Zero-Reflection Native AOT:**
-   - Source generated JSON via `DwsJsonContext` (`JsonSerializerContext`).
-   - All P/Invoke calls modernized to `[LibraryImport]` with compile-time stubs.
+4. **Self-Contained Single-File GUI:**
+   - True single-executable distribution (`DWS11-Enterprise-v2.1.0-win-x64.exe`) with 0 external DLLs required.
+   - Built with `PublishSingleFile=true`, `IncludeNativeLibrariesForSelfExtract=true`, `EnableCompressionInSingleFile=true`.
+   - Native SkiaSharp, HarfBuzzSharp and Angle graphics run seamlessly without manual unpacking.
+   - Manifest configured with `requireAdministrator` for direct UAC elevation.
 
-5. **Persistence Watchdog:**
-   - Automatically scheduled in Windows Task Scheduler under `NT AUTHORITY\SYSTEM` (`S-1-5-18`).
-   - Triggered on Windows Update `Event ID 19` in `Microsoft-Windows-WindowsUpdateClient/Operational` to verify and maintain system compliance.
+5. **Embedded & Signed Policy Catalog:**
+   - All 37 enterprise rules and RSA-4096 signature are embedded directly in `DWS.Core`.
+   - Falls back automatically to embedded catalog if no local `rules.json` exists.
+   - External rule overrides are strictly verified against pinned RSA-4096 authority and rejected if tampered.
 
-6. **Local REST API Worker (Kestrel):**
-   - Headless background worker listening exclusively on `127.0.0.1:5123`.
-   - Endpoints:
-     - `GET /api/status`: System & rule compliance state.
-     - `GET /api/rules`: Active rule definitions.
-     - `POST /api/rules/apply`: Dry-run simulation or transactional execution.
-     - `GET /api/audit/history`: Audit trail and transaction journal.
-     - `POST /api/audit/revert/{id}`: Full transaction rollback.
-     - `POST /api/audit/revert/{id}/category/{category}`: Selective category rollback.
-     - `GET /api/watchdog`: Watchdog installation status.
+6. **Persistence Watchdog & /SILENT-AUDIT:**
+   - Headless background watchdog mode: executes `/SILENT-AUDIT` without opening a GUI window.
+   - Saves structured audit results to `%ProgramData%\DWS\audit\`.
+   - Returns exit code `0` (compliant), `2` (pending changes/regressions detected), or `1` (error).
+   - Scheduled via Task Scheduler under `NT AUTHORITY\SYSTEM` on Windows Update `Event ID 19`.
+
+7. **Named Pipe IPC Broker:**
+   - Inter-process communication via `\\.\pipe\DWS11_Enterprise_IPC_v2` with secure token authentication.
+   - Graceful in-process fallback when Worker service is not active.
 
 ---
 
-## 🚀 Building & Running
+## 🚀 Building & Publishing
 
 ### Prerequisites
 - Windows 10 22H2 (Build 19045+) or Windows 11 (Build 22000+)
 - .NET 8.0 SDK (automatically configured in `%USERPROFILE%\.dotnet`)
 
 ### Build
-Run `build.cmd` or:
+Run `scripts\build.cmd` or:
 ```cmd
 dotnet build DWS.Enterprise.sln -c Release
 ```
 
-### Native AOT Publishing
-Run `scripts\publish-aot.cmd` or:
+### Running Tests
+Run `scripts\run-tests.cmd` or:
 ```cmd
-dotnet publish src\DWS.GUI\DWS.GUI.csproj -c Release -r win-x64 --self-contained -p:PublishAot=true -p:PublishSingleFile=true -o publish\gui
-dotnet publish src\DWS.Worker\DWS.Worker.csproj -c Release -r win-x64 --self-contained -p:PublishAot=true -p:PublishSingleFile=true -o publish\worker
+dotnet test tests\DWS.Tests\DWS.Tests.csproj
 ```
-Binaries will be output to `publish\gui\DWS.GUI.exe` and `publish\worker\DWS.Worker.exe`.
+
+### Single-File Publishing
+Run `scripts\publish.cmd`. The standalone executable and its SHA-256 hash will be generated in:
+```
+dist\DWS11-Enterprise-v2.1.0-win-x64.exe
+dist\DWS11-Enterprise-v2.1.0-win-x64.exe.sha256
+```
