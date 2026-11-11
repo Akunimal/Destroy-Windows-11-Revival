@@ -18,10 +18,12 @@ Write-Host "[2/3] Sandbox iniciado. Esperando interaccion del usuario dentro del
 Write-Host "  (El Sandbox ejecutara primero /SILENT-AUDIT y luego abrira la GUI)" -ForegroundColor DarkGray
 Write-Host ""
 
+$StartTime = Get-Date
 $CompletedFlag = $null
 while ($null -eq $CompletedFlag) {
     Start-Sleep -Seconds 3
     $CompletedFlag = Get-ChildItem -Path $ArtifactsDir -Filter "_PIPELINE_COMPLETED.flag" -Recurse -ErrorAction SilentlyContinue |
+        Where-Object { $_.LastWriteTime -ge $StartTime } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
 
