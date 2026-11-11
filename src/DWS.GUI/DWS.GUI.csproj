@@ -2,16 +2,16 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <PublishAot>true</PublishAot>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <PublishTrimmed>false</PublishTrimmed>
     <RootNamespace>DWS.GUI</RootNamespace>
     <AssemblyName>DWS.GUI</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Version>2.0.0</Version>
-    <Authors>DWS Enterprise Team</Authors>
-    <Company>DWS</Company>
-    <Product>DWS 11 Enterprise GUI</Product>
     <Description>Modern GUI for DWS 11 Enterprise</Description>
-    <Copyright>Copyright © 2026</Copyright>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -27,11 +27,5 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <ProjectReference Include="..\DWS.Core\DWS.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <TrimmerRootAssembly Include="DWS.Core" />
-    <TrimmerRootAssembly Include="DWS.GUI" />
-    <TrimmerRootAssembly Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
 </Project>

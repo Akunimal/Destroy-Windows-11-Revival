@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -75,15 +76,58 @@ public class SecureRuleEngine
             }
         }
 
-        if (targetPath == null)
+        if (targetPath != null)
         {
-            // If file does not exist, return built-in baseline
-            _logger?.LogWarning("Rules file not found at '{Path}'. Using built-in baseline.", filePath);
-            return GetDefaultEnterpriseRuleSet();
+            try
+            {
+                string jsonPayload = File.ReadAllText(targetPath);
+                return LoadAndVerifyRules(jsonPayload);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Failed to load/verify external rules file at '{Path}'. Falling back to embedded rules.", targetPath);
+                // If it was an explicit security failure (e.g. invalid signature), propagate it so tampered overrides are rejected
+                if (ex is SecurityException)
+                {
+                    throw;
+                }
+            }
         }
 
-        string jsonPayload = File.ReadAllText(targetPath);
-        return LoadAndVerifyRules(jsonPayload);
+        // Try loading verified embedded rules resource (37 rules)
+        var embeddedRules = LoadEmbeddedRules();
+        if (embeddedRules != null)
+        {
+            _logger?.LogInformation("Loaded {Count} verified rules from embedded resource.", embeddedRules.Rules.Count);
+            return embeddedRules;
+        }
+
+        // Fallback to minimal built-in baseline
+        _logger?.LogWarning("Embedded rules not found. Using minimal built-in baseline.");
+        return GetDefaultEnterpriseRuleSet();
+    }
+
+    public RuleSet? LoadEmbeddedRules()
+    {
+        try
+        {
+            var assembly = typeof(SecureRuleEngine).Assembly;
+            const string resourceName = "DWS.Core.rules.json";
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                return null;
+            }
+
+            using var reader = new StreamReader(stream);
+            string jsonPayload = reader.ReadToEnd();
+            return LoadAndVerifyRules(jsonPayload);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to load/verify embedded rules resource.");
+            return null;
+        }
     }
 
     public static byte[] GetCanonicalPayloadBytes(RuleSet ruleSet)

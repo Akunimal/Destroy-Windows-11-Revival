@@ -11,10 +11,27 @@ public class TransactionJournal
     private readonly string _journalDirectory;
     private readonly ILogger<TransactionJournal>? _logger;
 
+    public static string DefaultJournalDirectory =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "DWS", "journal");
+
     public TransactionJournal(string? basePath = null, ILogger<TransactionJournal>? logger = null)
     {
-        _journalDirectory = Path.Combine(basePath ?? AppContext.BaseDirectory, "journal");
-        Directory.CreateDirectory(_journalDirectory);
+        _journalDirectory = basePath != null
+            ? Path.Combine(basePath, "journal")
+            : DefaultJournalDirectory;
+
+        try
+        {
+            Directory.CreateDirectory(_journalDirectory);
+        }
+        catch (Exception ex)
+        {
+            // Fallback gracefully to local directory if %ProgramData% is somehow inaccessible
+            _journalDirectory = Path.Combine(AppContext.BaseDirectory, "journal");
+            Directory.CreateDirectory(_journalDirectory);
+            logger?.LogWarning(ex, "Failed to create journal in ProgramData, falling back to local: {Dir}", _journalDirectory);
+        }
+
         _logger = logger;
     }
 
