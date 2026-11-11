@@ -6,13 +6,12 @@ $RunId          = Get-Date -Format "yyyyMMdd-HHmmss"
 $ArtifactDir    = "C:\DWS_Artifacts\Run_$RunId"
 $IsolatedDir    = "C:\DWS_Isolated"
 $ProgramDataDWS = "$env:ProgramData\DWS"
-$ExeTarget      = "$IsolatedDir\DWS11-Enterprise-v2.1.1-win-x64.exe"
 
 New-Item -ItemType Directory -Force -Path $ArtifactDir, $IsolatedDir | Out-Null
 Start-Transcript -Path "$ArtifactDir\Sandbox_Execution_Transcript.log" -Force
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " DWS 11 ENTERPRISE v2.1.1 - SANDBOX VERIFICATION PIPELINE" -ForegroundColor Cyan
+Write-Host " DWS 11 ENTERPRISE - SANDBOX VERIFICATION PIPELINE" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # --- PRE-FLIGHT: NEUTRALIZAR SMART APP CONTROL (SAC) E IMPORTAR ROOT CA ---
@@ -53,10 +52,12 @@ try {
 
 # --- FASE 0: PREPARACION Y AISLAMIENTO DEL BINARIO ---
 Write-Host "`n[FASE 0] Copiando ejecutable al disco local del Sandbox..." -ForegroundColor Yellow
-$ExeSource = (Get-ChildItem -Path "C:\DWS_Dist" -Filter "DWS11-Enterprise-v2.1.1*.exe" | Select-Object -First 1).FullName
-if (-not $ExeSource) {
-    $ExeSource = (Get-ChildItem -Path "C:\DWS_Dist" -Filter "*.exe" | Select-Object -First 1).FullName
+$ExeItem = Get-ChildItem -Path "C:\DWS_Dist" -Filter "DWS11-Enterprise-*.exe" | Sort-Object Name -Descending | Select-Object -First 1
+if (-not $ExeItem) {
+    $ExeItem = Get-ChildItem -Path "C:\DWS_Dist" -Filter "*.exe" | Select-Object -First 1
 }
+$ExeSource = $ExeItem.FullName
+$ExeTarget = Join-Path $IsolatedDir $ExeItem.Name
 
 Copy-Item -Path $ExeSource -Destination $ExeTarget -Force
 Unblock-File -Path $ExeTarget -ErrorAction SilentlyContinue

@@ -33,4 +33,23 @@ public class KtmTransactionTests
 
         Assert.Throws<ObjectDisposedException>(() => ktm.Commit());
     }
+
+    [Fact]
+    public void KtmTransaction_SetDwordAndRollback_SucceedsWithoutLeaking()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        string testSubKey = @"Software\DWS_Test_KtmAccess";
+        string testVal = "TestVal";
+
+        using (var ktm = new KtmTransactionManager("DWS_Unit_Test_SetRollback"))
+        {
+            ktm.SetDword(KtmTransactionManager.HKEY_CURRENT_USER, testSubKey, testVal, 42);
+            ktm.Rollback();
+        }
+
+        // Key should not exist committed in standard registry
+        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(testSubKey);
+        Assert.Null(key);
+    }
 }

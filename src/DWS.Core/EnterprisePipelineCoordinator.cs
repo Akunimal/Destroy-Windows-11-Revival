@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using DWS.Core.KTM;
 using DWS.Core.Logging;
@@ -152,27 +153,13 @@ public sealed class EnterprisePipelineCoordinator
                                 }
                                 else
                                 {
-                                    // Record change in journal
-                                    _journal.LogChange(new TransactionEntry
-                                    {
-                                        TransactionId = transactionId,
-                                        Timestamp = DateTime.UtcNow,
-                                        Category = rule.Category,
-                                        ChangeType = ChangeType.RegistrySet,
-                                        RuleName = rule.DisplayName,
-                                        Hive = hive,
-                                        KeyPath = path,
-                                        ValueName = name,
-                                        NewValue = desiredVal,
-                                        PreviousValue = currentVal,
-                                        PreviousValueExisted = exists,
-                                        Status = TransactionStatus.Applied
-                                    });
+                                    bool appliedSuccessfully = false;
+                                    bool isAdmin = _privilegeBroker.IsRunningAsAdministrator();
 
                                     try
                                     {
-                                        // Apply via KTM (with TrustedInstaller impersonation if required)
-                                        if (rule.RequiresTrustedInstaller && _privilegeBroker.IsRunningAsAdministrator())
+                                        // 1. If rule explicitly requires TrustedInstaller, try TI first
+                                        if (rule.RequiresTrustedInstaller && isAdmin)
                                         {
                                             try
                                             {
@@ -180,16 +167,31 @@ public sealed class EnterprisePipelineCoordinator
                                                 {
                                                     ktm.SetValue(hive, path, name, desiredVal);
                                                 });
+                                                appliedSuccessfully = true;
                                             }
                                             catch
                                             {
-                                                // Fallback to direct KTM if TI service is unavailable
-                                                ktm.SetValue(hive, path, name, desiredVal);
+                                                // Fallback to standard execution if TI service fails
                                             }
                                         }
-                                        else
+
+                                        // 2. Direct KTM application with reactive elevation on ERROR_ACCESS_DENIED (5)
+                                        if (!appliedSuccessfully)
                                         {
-                                            ktm.SetValue(hive, path, name, desiredVal);
+                                            try
+                                            {
+                                                ktm.SetValue(hive, path, name, desiredVal);
+                                                appliedSuccessfully = true;
+                                            }
+                                            catch (Win32Exception ex) when (ex.NativeErrorCode == 5 && isAdmin)
+                                            {
+                                                // Dynamic reactive elevation to TrustedInstaller
+                                                SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
+                                                {
+                                                    ktm.SetValue(hive, path, name, desiredVal);
+                                                });
+                                                appliedSuccessfully = true;
+                                            }
                                         }
                                     }
                                     catch (Exception ex) when (path.Contains("Windows Defender", StringComparison.OrdinalIgnoreCase) ||
@@ -197,18 +199,42 @@ public sealed class EnterprisePipelineCoordinator
                                     {
                                         progress?.Report(new PipelineProgress(pct, $"[Tamper Protection] Protected key skipped ({name}): {ex.Message}", rule.DisplayName, "Warning"));
                                     }
-
-                                    // Apply to LGPO
-                                    if (int.TryParse(desiredVal, out int dwordVal))
+                                    catch (Exception ex)
                                     {
-                                        lgpoWriter.SetDwordPolicy(path, name, dwordVal);
-                                    }
-                                    else
-                                    {
-                                        lgpoWriter.SetStringPolicy(path, name, desiredVal);
+                                        progress?.Report(new PipelineProgress(pct, $"[Protected Key Warning] Skipped {name} ({path}): {ex.Message}", rule.DisplayName, "Warning"));
                                     }
 
-                                    progress?.Report(new PipelineProgress(pct, $"Applied rule: {rule.DisplayName}", rule.DisplayName, "Information"));
+                                    if (appliedSuccessfully)
+                                    {
+                                        // Record change in journal
+                                        _journal.LogChange(new TransactionEntry
+                                        {
+                                            TransactionId = transactionId,
+                                            Timestamp = DateTime.UtcNow,
+                                            Category = rule.Category,
+                                            ChangeType = ChangeType.RegistrySet,
+                                            RuleName = rule.DisplayName,
+                                            Hive = hive,
+                                            KeyPath = path,
+                                            ValueName = name,
+                                            NewValue = desiredVal,
+                                            PreviousValue = currentVal,
+                                            PreviousValueExisted = exists,
+                                            Status = TransactionStatus.Applied
+                                        });
+
+                                        // Apply to LGPO
+                                        if (int.TryParse(desiredVal, out int dwordVal))
+                                        {
+                                            lgpoWriter.SetDwordPolicy(path, name, dwordVal);
+                                        }
+                                        else
+                                        {
+                                            lgpoWriter.SetStringPolicy(path, name, desiredVal);
+                                        }
+
+                                        progress?.Report(new PipelineProgress(pct, $"Applied rule: {rule.DisplayName}", rule.DisplayName, "Information"));
+                                    }
                                 }
                             }
                             else if (string.Equals(op.Type, "service", StringComparison.OrdinalIgnoreCase))

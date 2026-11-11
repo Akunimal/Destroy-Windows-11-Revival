@@ -10,7 +10,18 @@ public sealed partial class KtmTransactionManager : IDisposable
     public static readonly IntPtr HKEY_LOCAL_MACHINE = new(unchecked((int)0x80000002));
     public static readonly IntPtr HKEY_CURRENT_USER = new(unchecked((int)0x80000001));
 
-    private const uint KEY_ALL_ACCESS = 0xF003F;
+    private const uint KEY_QUERY_VALUE = 0x0001;
+    private const uint KEY_SET_VALUE = 0x0002;
+    private const uint KEY_CREATE_SUB_KEY = 0x0004;
+    private const uint KEY_ENUMERATE_SUB_KEYS = 0x0008;
+    private const uint KEY_NOTIFY = 0x0010;
+    private const uint STANDARD_RIGHTS_READ = 0x00020000;
+    private const uint STANDARD_RIGHTS_WRITE = 0x00020000;
+    private const uint KEY_WOW64_64KEY = 0x0100;
+
+    // 0x20006 | 0x0100 = 0x20106: Explicit 64-bit view + write access (without WRITE_DAC/WRITE_OWNER)
+    private const uint DEFAULT_WRITE_SAM = STANDARD_RIGHTS_WRITE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WOW64_64KEY;
+
     private const uint REG_DWORD = 4;
     private const uint REG_SZ = 1;
 
@@ -95,7 +106,7 @@ public sealed partial class KtmTransactionManager : IDisposable
             0,
             IntPtr.Zero,
             0,
-            KEY_ALL_ACCESS,
+            DEFAULT_WRITE_SAM,
             IntPtr.Zero,
             out SafeRegistryHandle hKeyResult,
             out _,
@@ -128,7 +139,7 @@ public sealed partial class KtmTransactionManager : IDisposable
             0,
             IntPtr.Zero,
             0,
-            KEY_ALL_ACCESS,
+            DEFAULT_WRITE_SAM,
             IntPtr.Zero,
             out SafeRegistryHandle hKeyResult,
             out _,
@@ -179,7 +190,7 @@ public sealed partial class KtmTransactionManager : IDisposable
             0,
             IntPtr.Zero,
             0,
-            KEY_ALL_ACCESS,
+            DEFAULT_WRITE_SAM,
             IntPtr.Zero,
             out SafeRegistryHandle hKeyResult,
             out _,

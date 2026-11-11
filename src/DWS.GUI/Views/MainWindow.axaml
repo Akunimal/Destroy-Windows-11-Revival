@@ -8,7 +8,7 @@
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="DWS.GUI.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="DWS 11 Enterprise v2.0"
+        Title="DWS 11 Enterprise"
         Width="1200" Height="800"
         MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen"
@@ -29,7 +29,7 @@
           <Border Background="#0078D4" 
                   CornerRadius="4" 
                   Padding="8,4">
-            <TextBlock Text="v2.0 Native AOT" 
+            <TextBlock Text="v2.1 Enterprise" 
                        FontSize="12" 
                        Foreground="White"
                        VerticalAlignment="Center"/>

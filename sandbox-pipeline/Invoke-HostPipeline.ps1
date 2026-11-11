@@ -5,7 +5,7 @@ $WsbPath      = "$BaseDir\DWS-Verification.wsb"
 $ArtifactsDir = "$BaseDir\artifacts"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " LANZANDO PIPELINE EN WINDOWS SANDBOX PARA DWS 11 v2.1.1" -ForegroundColor Cyan
+Write-Host " LANZANDO PIPELINE EN WINDOWS SANDBOX PARA DWS 11" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host "Configuracion WSB: $WsbPath" -ForegroundColor Gray
 Write-Host "Carpeta de Artefactos: $ArtifactsDir" -ForegroundColor Gray
