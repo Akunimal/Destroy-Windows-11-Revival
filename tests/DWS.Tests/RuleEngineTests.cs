@@ -113,6 +113,60 @@ public class RuleEngineTests
     }
 
     [Fact]
+    public void LoadEmbeddedRules_LoadsAndVerifiesAll37Rules()
+    {
+        var embeddedSet = _engine.LoadEmbeddedRules();
+
+        Assert.NotNull(embeddedSet);
+        Assert.NotNull(embeddedSet.Rules);
+        Assert.Equal(37, embeddedSet.Rules.Count);
+        Assert.False(string.IsNullOrWhiteSpace(embeddedSet.Signature));
+        byte[] sigBytes = Convert.FromBase64String(embeddedSet.Signature);
+        Assert.Equal(512, sigBytes.Length);
+    }
+
+    [Fact]
+    public void LoadAndVerifyRulesFromFile_WhenFileDoesNotExist_FallsBackToEmbedded37Rules()
+    {
+        // When non-existent file is requested, fallback must load all 37 embedded rules
+        var ruleSet = _engine.LoadAndVerifyRulesFromFile("non_existent_rules_path.json");
+
+        Assert.NotNull(ruleSet);
+        Assert.NotNull(ruleSet.Rules);
+        Assert.Equal(37, ruleSet.Rules.Count);
+    }
+
+    [Fact]
+    public void LoadAndVerifyRulesFromFile_WhenTamperedExternalFileProvided_ThrowsSecurityException()
+    {
+        string tempDir = Path.Combine(Path.GetTempPath(), $"dws_tamper_test_{Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempDir);
+        string fakeRulesPath = Path.Combine(tempDir, "rules.json");
+
+        try
+        {
+            string tamperedContent = """
+            {
+                "schemaVersion": "2.0.0",
+                "signature": "BAD_SIGNATURE",
+                "rules": []
+            }
+            """;
+            File.WriteAllText(fakeRulesPath, tamperedContent);
+
+            // An invalid external override must be rejected with SecurityException
+            Assert.Throws<SecurityException>(() => _engine.LoadAndVerifyRulesFromFile(fakeRulesPath));
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public void DefaultEnterpriseRuleSet_IsValidAndNotEmpty()
     {
         var defaultSet = SecureRuleEngine.GetDefaultEnterpriseRuleSet();

@@ -66,4 +66,14 @@ public class TransactionJournalTests
             }
         }
     }
+
+    [Fact]
+    public void DefaultJournalDirectory_PointsToProgramData()
+    {
+        string expectedBase = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        string defaultDir = TransactionJournal.DefaultJournalDirectory;
+
+        Assert.StartsWith(expectedBase, defaultDir, StringComparison.OrdinalIgnoreCase);
+        Assert.EndsWith(Path.Combine("DWS", "journal"), defaultDir, StringComparison.OrdinalIgnoreCase);
+    }
 }
