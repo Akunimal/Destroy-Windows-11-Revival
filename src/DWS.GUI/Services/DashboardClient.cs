@@ -30,6 +30,9 @@ public class DashboardClient : IDisposable
         _httpClient = CreatePipeHttpClient();
     }
 
+    // Bounded wait: ConnectAsync without a timeout blocks indefinitely when the Worker pipe does not exist.
+    private const int PipeConnectTimeoutMs = 2000;
+
     private static HttpClient CreatePipeHttpClient()
     {
         var pipeHandler = new SocketsHttpHandler
@@ -43,8 +46,22 @@ public class DashboardClient : IDisposable
                     options: PipeOptions.Asynchronous | PipeOptions.WriteThrough,
                     impersonationLevel: TokenImpersonationLevel.Identification);
 
-                await stream.ConnectAsync(cancellationToken).ConfigureAwait(false);
-                return stream;
+                try
+                {
+                    await stream.ConnectAsync(PipeConnectTimeoutMs, cancellationToken).ConfigureAwait(false);
+                    return stream;
+                }
+                catch (OperationCanceledException)
+                {
+                    stream.Dispose();
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    // Surface as HttpRequestException so callers take their in-process fallback path.
+                    stream.Dispose();
+                    throw new HttpRequestException("DWS Worker pipe unavailable.", ex);
+                }
             }
         };
 
