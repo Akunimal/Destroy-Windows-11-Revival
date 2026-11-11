@@ -69,4 +69,58 @@ public class KtmTransactionTests
         using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(missingKey);
         Assert.Null(key);
     }
+
+    [Fact]
+    public void KtmTransaction_CanUseTxR_EnforcesHiveAndImpersonationBoundaries()
+    {
+        // HKCU is supported
+        Assert.True(KtmTransactionManager.CanUseTxR("HKCU", @"Software\Test", false));
+
+        // HKLM\SOFTWARE is supported
+        Assert.True(KtmTransactionManager.CanUseTxR("HKLM", @"SOFTWARE\Policies\Microsoft\SQMClient", false));
+        Assert.True(KtmTransactionManager.CanUseTxR("HKLM", @"\SOFTWARE\Policies\Test", false));
+
+        // HKLM\SYSTEM is NOT supported by TxR
+        Assert.False(KtmTransactionManager.CanUseTxR("HKLM", @"SYSTEM\CurrentControlSet\Services\DiagTrack", false));
+        Assert.False(KtmTransactionManager.CanUseTxR("HKLM", @"SYSTEM\CurrentControlSet\Services\dmwappushservice", false));
+
+        // Task cache schedule is excluded from TxR
+        Assert.False(KtmTransactionManager.CanUseTxR("HKLM", @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache", false));
+
+        // TrustedInstaller impersonation bypasses TxR completely
+        Assert.False(KtmTransactionManager.CanUseTxR("HKLM", @"SOFTWARE\Policies\Microsoft", true));
+        Assert.False(KtmTransactionManager.CanUseTxR("HKCU", @"Software\Test", true));
+    }
+
+    [Fact]
+    public void DirectRegistryWrites_SetAndCleanlyDelete_Succeeds()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        string subKey = @"Software\DWS_DirectTest_" + Guid.NewGuid().ToString("N");
+        string valName = "DirectVal";
+
+        try
+        {
+            KtmTransactionManager.SetValueDirect("HKCU", subKey, valName, 12345);
+
+            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(subKey))
+            {
+                Assert.NotNull(key);
+                Assert.Equal(12345, key.GetValue(valName));
+            }
+
+            KtmTransactionManager.DeleteValueDirect("HKCU", subKey, valName);
+
+            using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(subKey))
+            {
+                Assert.NotNull(key);
+                Assert.Null(key.GetValue(valName));
+            }
+        }
+        finally
+        {
+            try { Microsoft.Win32.Registry.CurrentUser.DeleteSubKeyTree(subKey); } catch { }
+        }
+    }
 }

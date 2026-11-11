@@ -100,6 +100,26 @@ public sealed partial class KtmTransactionManager : IDisposable
         IntPtr pExtendedOptions);
 
     [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int RegCreateKeyExW(
+        IntPtr hKey,
+        string lpSubKey,
+        uint reserved,
+        IntPtr lpClass,
+        uint dwOptions,
+        uint samDesired,
+        IntPtr lpSecurityAttributes,
+        out SafeRegistryHandle phkResult,
+        out uint lpdwDisposition);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int RegOpenKeyExW(
+        IntPtr hKey,
+        string lpSubKey,
+        uint ulOptions,
+        uint samDesired,
+        out SafeRegistryHandle phkResult);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
     private static partial int RegSetValueExW(
         SafeRegistryHandle hKey,
         string lpValueName,
@@ -250,11 +270,89 @@ public sealed partial class KtmTransactionManager : IDisposable
         RollbackTransaction(_transactionHandle);
     }
 
-    private static IntPtr ResolveHive(string hive)
+    public static IntPtr ResolveHive(string hive)
     {
         return string.Equals(hive, "HKCU", StringComparison.OrdinalIgnoreCase)
             ? HKEY_CURRENT_USER
             : HKEY_LOCAL_MACHINE;
+    }
+
+    public static bool CanUseTxR(string hive, string subKeyPath, bool isImpersonatingTi = false)
+    {
+        if (isImpersonatingTi) return false; // Never mix thread impersonation with KTM handles
+        if (string.Equals(hive, "HKCU", StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.Equals(hive, "HKLM", StringComparison.OrdinalIgnoreCase))
+        {
+            string normalized = subKeyPath.TrimStart('\\');
+            return normalized.StartsWith(@"SOFTWARE\", StringComparison.OrdinalIgnoreCase) &&
+                   !normalized.StartsWith(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule", StringComparison.OrdinalIgnoreCase);
+        }
+        return false; // HKLM\SYSTEM, HKLM\SAM, HKLM\SECURITY do not support TxR
+    }
+
+    public static void SetValueDirect(string hive, string subKeyPath, string valueName, object value)
+    {
+        IntPtr hRoot = ResolveHive(hive);
+        int error = RegCreateKeyExW(
+            hRoot,
+            subKeyPath,
+            0,
+            IntPtr.Zero,
+            0,
+            DEFAULT_WRITE_SAM,
+            IntPtr.Zero,
+            out SafeRegistryHandle hKeyResult,
+            out _);
+
+        if (error != 0)
+        {
+            throw new Win32Exception(error, $"Failed to create/open key '{subKeyPath}' directly (Win32 Error {error}).");
+        }
+
+        using (hKeyResult)
+        {
+            if (value is int intVal || (value != null && int.TryParse(value.ToString(), out intVal)))
+            {
+                byte[] bytes = BitConverter.GetBytes(intVal);
+                error = RegSetValueExW(hKeyResult, valueName, 0, REG_DWORD, bytes, (uint)bytes.Length);
+            }
+            else
+            {
+                byte[] bytes = Encoding.Unicode.GetBytes((value?.ToString() ?? string.Empty) + "\0");
+                error = RegSetValueExW(hKeyResult, valueName, 0, REG_SZ, bytes, (uint)bytes.Length);
+            }
+
+            if (error != 0)
+            {
+                throw new Win32Exception(error, $"Failed to set direct value '{valueName}' in '{subKeyPath}' (Win32 Error {error}).");
+            }
+        }
+    }
+
+    public static void DeleteValueDirect(string hive, string subKeyPath, string valueName)
+    {
+        IntPtr hRoot = ResolveHive(hive);
+        int error = RegOpenKeyExW(
+            hRoot,
+            subKeyPath,
+            0,
+            DELETE_VALUE_SAM,
+            out SafeRegistryHandle hKeyResult);
+
+        if (error == ERROR_FILE_NOT_FOUND) return;
+        if (error != 0)
+        {
+            throw new Win32Exception(error, $"Failed to open key '{subKeyPath}' for direct deletion (Win32 Error {error}).");
+        }
+
+        using (hKeyResult)
+        {
+            int delErr = RegDeleteValueW(hKeyResult, valueName);
+            if (delErr != 0 && delErr != ERROR_FILE_NOT_FOUND)
+            {
+                throw new Win32Exception(delErr, $"Failed to delete direct value '{valueName}' in '{subKeyPath}' (Win32 Error {delErr}).");
+            }
+        }
     }
 
     private void ThrowIfDisposedOrCommitted()

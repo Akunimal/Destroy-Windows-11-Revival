@@ -93,8 +93,7 @@ public sealed class EnterprisePipelineCoordinator
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // 3. KTM transacted registry initialization
-                using var ktm = new KtmTransactionManager(transactionId);
+                // 3. Enterprise baseline initialization (Opportunistic Per-Rule KTM + Saga Journal)
                 var lgpoWriter = new LGPOWriter();
                 var serviceHandler = new Operations.ServiceOperationHandler();
                 int currentIndex = 0;
@@ -155,42 +154,81 @@ public sealed class EnterprisePipelineCoordinator
                                 {
                                     bool appliedSuccessfully = false;
                                     bool isAdmin = _privilegeBroker.IsRunningAsAdministrator();
+                                    bool canTxR = !rule.RequiresTrustedInstaller && KtmTransactionManager.CanUseTxR(hive, path, isImpersonatingTi: false);
 
                                     try
                                     {
-                                        // 1. If rule explicitly requires TrustedInstaller, try TI first
-                                        if (rule.RequiresTrustedInstaller && isAdmin)
+                                        if (canTxR)
                                         {
+                                            // Path A: Opportunistic Per-Rule KTM Transaction (HKLM\SOFTWARE & HKCU)
                                             try
                                             {
-                                                SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
-                                                {
-                                                    ktm.SetValue(hive, path, name, desiredVal);
-                                                });
-                                                appliedSuccessfully = true;
-                                            }
-                                            catch
-                                            {
-                                                // Fallback to standard execution if TI service fails
-                                            }
-                                        }
-
-                                        // 2. Direct KTM application with reactive elevation on ERROR_ACCESS_DENIED (5)
-                                        if (!appliedSuccessfully)
-                                        {
-                                            try
-                                            {
-                                                ktm.SetValue(hive, path, name, desiredVal);
+                                                using var ruleKtm = new KtmTransactionManager($"Rule_{rule.Id}_{Guid.NewGuid():N}");
+                                                ruleKtm.SetValue(hive, path, name, desiredVal);
+                                                ruleKtm.Commit();
                                                 appliedSuccessfully = true;
                                             }
                                             catch (Win32Exception ex) when (ex.NativeErrorCode == 5 && isAdmin)
                                             {
-                                                // Dynamic reactive elevation to TrustedInstaller
+                                                // Dynamic reactive escalation to TrustedInstaller via direct write (avoids token mismatch)
                                                 SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
                                                 {
-                                                    ktm.SetValue(hive, path, name, desiredVal);
+                                                    KtmTransactionManager.SetValueDirect(hive, path, name, desiredVal);
                                                 });
                                                 appliedSuccessfully = true;
+                                            }
+                                            catch (Win32Exception)
+                                            {
+                                                // TxR rejected on this key/hive in Windows 11; transparent fallback to direct write
+                                                try
+                                                {
+                                                    KtmTransactionManager.SetValueDirect(hive, path, name, desiredVal);
+                                                    appliedSuccessfully = true;
+                                                }
+                                                catch (Win32Exception ex) when (ex.NativeErrorCode == 5 && isAdmin)
+                                                {
+                                                    SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
+                                                    {
+                                                        KtmTransactionManager.SetValueDirect(hive, path, name, desiredVal);
+                                                    });
+                                                    appliedSuccessfully = true;
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // Path B: Direct Non-Transacted Win32 Write (HKLM\SYSTEM or Pre-Flagged TrustedInstaller)
+                                            if (rule.RequiresTrustedInstaller && isAdmin)
+                                            {
+                                                try
+                                                {
+                                                    SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
+                                                    {
+                                                        KtmTransactionManager.SetValueDirect(hive, path, name, desiredVal);
+                                                    });
+                                                    appliedSuccessfully = true;
+                                                }
+                                                catch
+                                                {
+                                                    // Fallback to standard direct write
+                                                }
+                                            }
+
+                                            if (!appliedSuccessfully)
+                                            {
+                                                try
+                                                {
+                                                    KtmTransactionManager.SetValueDirect(hive, path, name, desiredVal);
+                                                    appliedSuccessfully = true;
+                                                }
+                                                catch (Win32Exception ex) when (ex.NativeErrorCode == 5 && isAdmin)
+                                                {
+                                                    SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
+                                                    {
+                                                        KtmTransactionManager.SetValueDirect(hive, path, name, desiredVal);
+                                                    });
+                                                    appliedSuccessfully = true;
+                                                }
                                             }
                                         }
                                     }
@@ -277,7 +315,7 @@ public sealed class EnterprisePipelineCoordinator
                                 {
                                     try
                                     {
-                                        bool configured = serviceHandler.ConfigureServiceStartType(svcName, desiredMode, ktm);
+                                        bool configured = serviceHandler.ConfigureServiceStartType(svcName, desiredMode, null);
                                         if (configured)
                                         {
                                             _journal.LogChange(new TransactionEntry
@@ -344,7 +382,7 @@ public sealed class EnterprisePipelineCoordinator
                                 {
                                     try
                                     {
-                                        Operations.AppxOperationHandler.RemoveAndDeprovisionPackageAsync(pkgPattern, isDryRun: false, ktm, cancellationToken)
+                                        Operations.AppxOperationHandler.RemoveAndDeprovisionPackageAsync(pkgPattern, isDryRun: false, null, cancellationToken)
                                             .GetAwaiter().GetResult();
 
                                         _journal.LogChange(new TransactionEntry
@@ -494,10 +532,9 @@ public sealed class EnterprisePipelineCoordinator
                     progress?.Report(new PipelineProgress(90, "Applying Machine Group Policy (registry.pol)...", "", "Information"));
                     lgpoWriter.SaveAndApplyMachinePolicy();
 
-                    // 6. Commit KTM Kernel Transaction
+                    // 6. Finalize Transaction Journal (Saga Primary Coordinator)
                     cancellationToken.ThrowIfCancellationRequested();
-                    progress?.Report(new PipelineProgress(95, "Committing Kernel Transaction (KTM)...", "", "Information"));
-                    ktm.Commit();
+                    progress?.Report(new PipelineProgress(95, "Finalizing Enterprise Transaction Journal (Saga)...", "", "Information"));
 
                     // 7. Confirm BitLocker reboot
                     bitLockerGuard?.ConfirmRebootPending();
@@ -519,17 +556,16 @@ public sealed class EnterprisePipelineCoordinator
                 }
                 catch (OperationCanceledException)
                 {
-                    ktm.Rollback();
                     try { _journal.RevertTransactionAsync(transactionId).GetAwaiter().GetResult(); } catch { }
                     sw.Stop();
-                    progress?.Report(new PipelineProgress(0, "Operation aborted by user. KTM and Saga changes rolled back.", "", "Warning"));
+                    progress?.Report(new PipelineProgress(0, "Operation aborted by user. Saga changes rolled back.", "", "Warning"));
 
                     return new PipelineResult
                     {
                         Success = false,
                         AbortedByUser = true,
                         IsDryRun = isDryRun,
-                        ErrorMessage = "Pipeline cancelled by user. KTM and Saga transactional changes rolled back.",
+                        ErrorMessage = "Pipeline cancelled by user. Transactional changes rolled back.",
                         AuditReport = auditReport,
                         Duration = sw.Elapsed,
                         TotalRules = ruleSet.Rules.Count,

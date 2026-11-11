@@ -98,18 +98,15 @@ public class TransactionJournal
         _logger?.LogInformation("Reverting full transaction {TransactionId} ({Count} entries)",
             transactionId, appliedEntries.Count);
 
-        using var ktm = new KtmTransactionManager($"Revert_{transactionId}_Full");
-
         try
         {
             // Undo changes in reverse chronological order (LIFO) for transactional integrity
             foreach (var entry in appliedEntries.AsEnumerable().Reverse())
             {
-                await RevertSingleEntryAsync(entry, ktm);
+                await RevertSingleEntryAsync(entry);
                 entry.Status = TransactionStatus.Reverted;
             }
 
-            ktm.Commit();
             SaveEntries(transactionId, entries);
 
             _logger?.LogInformation("Successfully reverted transaction {TransactionId}", transactionId);
@@ -137,18 +134,15 @@ public class TransactionJournal
         _logger?.LogInformation("Reverting {Count} entries for category {Category}",
             categoryEntries.Count, category);
 
-        using var ktm = new KtmTransactionManager($"Revert_{transactionId}_{category}");
-
         try
         {
             // Reverse chronological order (LIFO)
             foreach (var entry in categoryEntries.AsEnumerable().Reverse())
             {
-                await RevertSingleEntryAsync(entry, ktm);
+                await RevertSingleEntryAsync(entry);
                 entry.Status = TransactionStatus.Reverted;
             }
 
-            ktm.Commit();
             SaveEntries(transactionId, entries);
 
             _logger?.LogInformation("Successfully reverted category {Category}", category);
@@ -174,18 +168,15 @@ public class TransactionJournal
 
         _logger?.LogInformation("Reverting {Count} specific entries", targetEntries.Count);
 
-        using var ktm = new KtmTransactionManager($"Revert_{transactionId}_specific");
-
         try
         {
             // Reverse chronological order (LIFO)
             foreach (var entry in targetEntries.AsEnumerable().Reverse())
             {
-                await RevertSingleEntryAsync(entry, ktm);
+                await RevertSingleEntryAsync(entry);
                 entry.Status = TransactionStatus.Reverted;
             }
 
-            ktm.Commit();
             SaveEntries(transactionId, entries);
 
             _logger?.LogInformation("Successfully reverted {Count} entries", targetEntries.Count);
@@ -198,7 +189,7 @@ public class TransactionJournal
         }
     }
 
-    private static async Task RevertSingleEntryAsync(TransactionEntry entry, KtmTransactionManager ktm)
+    private static async Task RevertSingleEntryAsync(TransactionEntry entry)
     {
         switch (entry.ChangeType)
         {
@@ -207,11 +198,11 @@ public class TransactionJournal
                 {
                     if (entry.PreviousValueExisted && entry.PreviousValue != null)
                     {
-                        ktm.SetValue(entry.Hive!, entry.KeyPath!, entry.ValueName!, entry.PreviousValue);
+                        KtmTransactionManager.SetValueDirect(entry.Hive!, entry.KeyPath!, entry.ValueName!, entry.PreviousValue);
                     }
                     else
                     {
-                        ktm.DeleteValue(entry.Hive!, entry.KeyPath!, entry.ValueName!);
+                        KtmTransactionManager.DeleteValueDirect(entry.Hive!, entry.KeyPath!, entry.ValueName!);
                     }
                 }
                 catch (Win32Exception ex) when (ex.NativeErrorCode == 5)
@@ -223,11 +214,11 @@ public class TransactionJournal
                         {
                             if (entry.PreviousValueExisted && entry.PreviousValue != null)
                             {
-                                ktm.SetValue(entry.Hive!, entry.KeyPath!, entry.ValueName!, entry.PreviousValue);
+                                KtmTransactionManager.SetValueDirect(entry.Hive!, entry.KeyPath!, entry.ValueName!, entry.PreviousValue);
                             }
                             else
                             {
-                                ktm.DeleteValue(entry.Hive!, entry.KeyPath!, entry.ValueName!);
+                                KtmTransactionManager.DeleteValueDirect(entry.Hive!, entry.KeyPath!, entry.ValueName!);
                             }
                         });
                     }
@@ -249,7 +240,7 @@ public class TransactionJournal
                     {
                         var serviceHandler = new Operations.ServiceOperationHandler();
                         uint startType = Operations.ServiceOperationHandler.ParseStartMode(entry.PreviousServiceStartMode);
-                        serviceHandler.ConfigureServiceStartType(entry.ServiceName, startType, ktm);
+                        serviceHandler.ConfigureServiceStartType(entry.ServiceName, startType, null);
                     }
                 }
                 catch
