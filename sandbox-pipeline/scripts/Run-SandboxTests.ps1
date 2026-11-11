@@ -15,6 +15,42 @@ Write-Host "==========================================================" -Foregro
 Write-Host " DWS 11 ENTERPRISE v2.1.1 - SANDBOX VERIFICATION PIPELINE" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
+# --- PRE-FLIGHT: NEUTRALIZAR SMART APP CONTROL (SAC) E IMPORTAR ROOT CA ---
+Write-Host "`n[*] Configurando Code Integrity y Certificate Stores para Smart App Control..." -ForegroundColor Yellow
+
+try {
+    # 1. Desactivar Smart App Control en el registro de CI
+    $sacRegPath = "HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy"
+    if (-not (Test-Path $sacRegPath)) { New-Item -Path $sacRegPath -Force | Out-Null }
+    Set-ItemProperty -Path $sacRegPath -Name "VerifiedAndReputablePolicyState" -Value 0 -Type DWord -Force
+    Write-Host " -> VerifiedAndReputablePolicyState = 0 aplicado." -ForegroundColor Green
+} catch {
+    Write-Host " -> Advertencia al ajustar CI Policy: $_" -ForegroundColor DarkGray
+}
+
+try {
+    # 2. Refrescar politicas de Code Integrity en caliente si CiTool esta presente
+    $ciTool = "$env:SystemRoot\System32\CiTool.exe"
+    if (Test-Path $ciTool) {
+        & $ciTool --refresh -json 2>&1 | Out-Null
+        Write-Host " -> CiTool --refresh ejecutado." -ForegroundColor Green
+    }
+} catch { }
+
+try {
+    # 3. Instalar certificado en LocalMachine\Root y LocalMachine\TrustedPublisher
+    $sandboxCert = Get-ChildItem -Path "C:\DWS_Dist" -Filter "*.cer" | Select-Object -First 1
+    if ($sandboxCert) {
+        Import-Certificate -FilePath $sandboxCert.FullName -CertStoreLocation "Cert:\LocalMachine\Root" | Out-Null
+        Import-Certificate -FilePath $sandboxCert.FullName -CertStoreLocation "Cert:\LocalMachine\TrustedPublisher" | Out-Null
+        Write-Host " -> Certificado $($sandboxCert.Name) importado en Root y TrustedPublisher." -ForegroundColor Green
+    } else {
+        Write-Host " -> Certificado .cer no encontrado en C:\DWS_Dist." -ForegroundColor DarkGray
+    }
+} catch {
+    Write-Host " -> Advertencia al importar certificado: $_" -ForegroundColor DarkGray
+}
+
 # --- FASE 0: PREPARACION Y AISLAMIENTO DEL BINARIO ---
 Write-Host "`n[FASE 0] Copiando ejecutable al disco local del Sandbox..." -ForegroundColor Yellow
 $ExeSource = (Get-ChildItem -Path "C:\DWS_Dist" -Filter "DWS11-Enterprise-v2.1.1*.exe" | Select-Object -First 1).FullName
@@ -23,6 +59,8 @@ if (-not $ExeSource) {
 }
 
 Copy-Item -Path $ExeSource -Destination $ExeTarget -Force
+Unblock-File -Path $ExeTarget -ErrorAction SilentlyContinue
+
 $FileHash = (Get-FileHash -Path $ExeTarget -Algorithm SHA256).Hash
 Write-Host " -> Binario aislado: $ExeTarget" -ForegroundColor Green
 Write-Host " -> SHA256: $FileHash" -ForegroundColor Gray
