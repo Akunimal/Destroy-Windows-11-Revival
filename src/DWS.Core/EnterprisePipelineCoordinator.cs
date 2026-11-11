@@ -275,20 +275,34 @@ public sealed class EnterprisePipelineCoordinator
                                 }
                                 else if (svcExists && action != "MATCH")
                                 {
-                                    _journal.LogChange(new TransactionEntry
+                                    try
                                     {
-                                        TransactionId = transactionId,
-                                        Timestamp = DateTime.UtcNow,
-                                        Category = rule.Category,
-                                        ChangeType = ChangeType.ServiceConfig,
-                                        RuleName = rule.DisplayName,
-                                        ServiceName = svcName,
-                                        PreviousServiceStartMode = curStart.ToString(),
-                                        Status = TransactionStatus.Applied
-                                    });
+                                        bool configured = serviceHandler.ConfigureServiceStartType(svcName, desiredMode, ktm);
+                                        if (configured)
+                                        {
+                                            _journal.LogChange(new TransactionEntry
+                                            {
+                                                TransactionId = transactionId,
+                                                Timestamp = DateTime.UtcNow,
+                                                Category = rule.Category,
+                                                ChangeType = ChangeType.ServiceConfig,
+                                                RuleName = rule.DisplayName,
+                                                ServiceName = svcName,
+                                                PreviousServiceStartMode = curStart.ToString(),
+                                                Status = TransactionStatus.Applied
+                                            });
 
-                                    serviceHandler.ConfigureServiceStartType(svcName, desiredMode, ktm);
-                                    progress?.Report(new PipelineProgress(pct, $"Configured service: {svcName}", rule.DisplayName, "Information"));
+                                            progress?.Report(new PipelineProgress(pct, $"Configured service: {svcName}", rule.DisplayName, "Information"));
+                                        }
+                                        else
+                                        {
+                                            progress?.Report(new PipelineProgress(pct, $"[Service Warning] Could not configure start type for {svcName}", rule.DisplayName, "Warning"));
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        progress?.Report(new PipelineProgress(pct, $"[Service Warning] Skipped {svcName}: {ex.Message}", rule.DisplayName, "Warning"));
+                                    }
                                 }
                             }
                             else if (string.Equals(op.Type, "appx", StringComparison.OrdinalIgnoreCase))
@@ -328,20 +342,28 @@ public sealed class EnterprisePipelineCoordinator
                                 }
                                 else if (action == "REMOVE")
                                 {
-                                    _journal.LogChange(new TransactionEntry
+                                    try
                                     {
-                                        TransactionId = transactionId,
-                                        Timestamp = DateTime.UtcNow,
-                                        Category = rule.Category,
-                                        ChangeType = ChangeType.AppxRemoval,
-                                        RuleName = rule.DisplayName,
-                                        PackagePattern = pkgPattern,
-                                        Status = TransactionStatus.Applied
-                                    });
+                                        Operations.AppxOperationHandler.RemoveAndDeprovisionPackageAsync(pkgPattern, isDryRun: false, ktm, cancellationToken)
+                                            .GetAwaiter().GetResult();
 
-                                    Operations.AppxOperationHandler.RemoveAndDeprovisionPackageAsync(pkgPattern, isDryRun: false, ktm, cancellationToken)
-                                        .GetAwaiter().GetResult();
-                                    progress?.Report(new PipelineProgress(pct, $"Removed AppX package: {pkgPattern}", rule.DisplayName, "Information"));
+                                        _journal.LogChange(new TransactionEntry
+                                        {
+                                            TransactionId = transactionId,
+                                            Timestamp = DateTime.UtcNow,
+                                            Category = rule.Category,
+                                            ChangeType = ChangeType.AppxRemoval,
+                                            RuleName = rule.DisplayName,
+                                            PackagePattern = pkgPattern,
+                                            Status = TransactionStatus.Applied
+                                        });
+
+                                        progress?.Report(new PipelineProgress(pct, $"Removed AppX package: {pkgPattern}", rule.DisplayName, "Information"));
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        progress?.Report(new PipelineProgress(pct, $"[AppX Warning] Skipped {pkgPattern}: {ex.Message}", rule.DisplayName, "Warning"));
+                                    }
                                 }
                             }
                             else if (string.Equals(op.Type, "hosts", StringComparison.OrdinalIgnoreCase))
@@ -372,21 +394,43 @@ public sealed class EnterprisePipelineCoordinator
                                 }
                                 else if (domains.Count > 0)
                                 {
-                                    _journal.LogChange(new TransactionEntry
+                                    bool hostsApplied = false;
+                                    for (int attempt = 1; attempt <= 3; attempt++)
                                     {
-                                        TransactionId = transactionId,
-                                        Timestamp = DateTime.UtcNow,
-                                        Category = rule.Category,
-                                        ChangeType = ChangeType.HostsModify,
-                                        RuleName = rule.DisplayName,
-                                        PreviousHostsBlock = currentBlock,
-                                        BlockedDomains = domains,
-                                        Status = TransactionStatus.Applied
-                                    });
+                                        try
+                                        {
+                                            Operations.HostsOperationHandler.ApplyHostsBlockAsync(domains, null, cancellationToken)
+                                                .GetAwaiter().GetResult();
+                                            hostsApplied = true;
+                                            break;
+                                        }
+                                        catch (IOException) when (attempt < 3)
+                                        {
+                                            Thread.Sleep(attempt * 150);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            progress?.Report(new PipelineProgress(pct, $"[Hosts Warning] Failed to update hosts block ({ex.Message})", rule.DisplayName, "Warning"));
+                                            break;
+                                        }
+                                    }
 
-                                    Operations.HostsOperationHandler.ApplyHostsBlockAsync(domains, null, cancellationToken)
-                                        .GetAwaiter().GetResult();
-                                    progress?.Report(new PipelineProgress(pct, $"Updated Hosts block: {domains.Count} domains", rule.DisplayName, "Information"));
+                                    if (hostsApplied)
+                                    {
+                                        _journal.LogChange(new TransactionEntry
+                                        {
+                                            TransactionId = transactionId,
+                                            Timestamp = DateTime.UtcNow,
+                                            Category = rule.Category,
+                                            ChangeType = ChangeType.HostsModify,
+                                            RuleName = rule.DisplayName,
+                                            PreviousHostsBlock = currentBlock,
+                                            BlockedDomains = domains,
+                                            Status = TransactionStatus.Applied
+                                        });
+
+                                        progress?.Report(new PipelineProgress(pct, $"Updated Hosts block: {domains.Count} domains", rule.DisplayName, "Information"));
+                                    }
                                 }
                             }
                         }

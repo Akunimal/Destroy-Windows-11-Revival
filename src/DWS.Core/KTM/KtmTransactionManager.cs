@@ -10,6 +10,7 @@ public sealed partial class KtmTransactionManager : IDisposable
     public static readonly IntPtr HKEY_LOCAL_MACHINE = new(unchecked((int)0x80000002));
     public static readonly IntPtr HKEY_CURRENT_USER = new(unchecked((int)0x80000001));
 
+    private const int ERROR_FILE_NOT_FOUND = 2;
     private const uint KEY_QUERY_VALUE = 0x0001;
     private const uint KEY_SET_VALUE = 0x0002;
     private const uint KEY_CREATE_SUB_KEY = 0x0004;
@@ -21,6 +22,12 @@ public sealed partial class KtmTransactionManager : IDisposable
 
     // 0x20006 | 0x0100 = 0x20106: Explicit 64-bit view + write access (without WRITE_DAC/WRITE_OWNER)
     private const uint DEFAULT_WRITE_SAM = STANDARD_RIGHTS_WRITE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_WOW64_64KEY;
+
+    // 0x20107: Explicit 64-bit view + read & write access
+    private const uint DEFAULT_READ_WRITE_SAM = DEFAULT_WRITE_SAM | KEY_QUERY_VALUE;
+
+    // 0x0102: Explicit 64-bit view + set/delete value only
+    private const uint DELETE_VALUE_SAM = KEY_SET_VALUE | KEY_WOW64_64KEY;
 
     private const uint REG_DWORD = 4;
     private const uint REG_SZ = 1;
@@ -79,6 +86,16 @@ public sealed partial class KtmTransactionManager : IDisposable
         IntPtr lpSecurityAttributes,
         out SafeRegistryHandle phkResult,
         out uint lpdwDisposition,
+        SafeTransactionHandle hTransaction,
+        IntPtr pExtendedOptions);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int RegOpenKeyTransactedW(
+        IntPtr hKey,
+        string lpSubKey,
+        uint ulOptions,
+        uint samDesired,
+        out SafeRegistryHandle phkResult,
         SafeTransactionHandle hTransaction,
         IntPtr pExtendedOptions);
 
@@ -184,27 +201,32 @@ public sealed partial class KtmTransactionManager : IDisposable
         ThrowIfDisposedOrCommitted();
         IntPtr hRoot = ResolveHive(hive);
 
-        int error = RegCreateKeyTransactedW(
+        int error = RegOpenKeyTransactedW(
             hRoot,
             keyPath,
             0,
-            IntPtr.Zero,
-            0,
-            DEFAULT_WRITE_SAM,
-            IntPtr.Zero,
+            DELETE_VALUE_SAM,
             out SafeRegistryHandle hKeyResult,
-            out _,
             _transactionHandle,
             IntPtr.Zero);
 
-        if (error != 0)
+        if (error == ERROR_FILE_NOT_FOUND)
         {
             return; // Key does not exist, nothing to delete
         }
 
+        if (error != 0)
+        {
+            throw new Win32Exception(error, $"Failed to open transacted key '{keyPath}' for deletion (Win32 Error {error}).");
+        }
+
         using (hKeyResult)
         {
-            RegDeleteValueW(hKeyResult, valueName);
+            int delErr = RegDeleteValueW(hKeyResult, valueName);
+            if (delErr != 0 && delErr != ERROR_FILE_NOT_FOUND)
+            {
+                throw new Win32Exception(delErr, $"Failed to delete transacted value '{valueName}' in '{keyPath}' (Win32 Error {delErr}).");
+            }
         }
     }
 

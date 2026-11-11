@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.Json;
 using DWS.Core.Json;
@@ -202,36 +203,86 @@ public class TransactionJournal
         switch (entry.ChangeType)
         {
             case ChangeType.RegistrySet:
-                if (entry.PreviousValueExisted && entry.PreviousValue != null)
+                try
                 {
-                    ktm.SetValue(entry.Hive!, entry.KeyPath!, entry.ValueName!, entry.PreviousValue);
+                    if (entry.PreviousValueExisted && entry.PreviousValue != null)
+                    {
+                        ktm.SetValue(entry.Hive!, entry.KeyPath!, entry.ValueName!, entry.PreviousValue);
+                    }
+                    else
+                    {
+                        ktm.DeleteValue(entry.Hive!, entry.KeyPath!, entry.ValueName!);
+                    }
                 }
-                else
+                catch (Win32Exception ex) when (ex.NativeErrorCode == 5)
                 {
-                    ktm.DeleteValue(entry.Hive!, entry.KeyPath!, entry.ValueName!);
+                    // Reactive TrustedInstaller fallback on Access Denied during revert
+                    try
+                    {
+                        Security.SystemPrivilegeBroker.RunAsTrustedInstaller(() =>
+                        {
+                            if (entry.PreviousValueExisted && entry.PreviousValue != null)
+                            {
+                                ktm.SetValue(entry.Hive!, entry.KeyPath!, entry.ValueName!, entry.PreviousValue);
+                            }
+                            else
+                            {
+                                ktm.DeleteValue(entry.Hive!, entry.KeyPath!, entry.ValueName!);
+                            }
+                        });
+                    }
+                    catch
+                    {
+                        // Protected key warning, isolate to allow remaining reverts to commit
+                    }
+                }
+                catch
+                {
+                    // Non-fatal isolation to allow other entries to revert
                 }
                 break;
 
             case ChangeType.ServiceConfig:
-                if (!string.IsNullOrEmpty(entry.ServiceName) && !string.IsNullOrEmpty(entry.PreviousServiceStartMode))
+                try
                 {
-                    var serviceHandler = new Operations.ServiceOperationHandler();
-                    uint startType = Operations.ServiceOperationHandler.ParseStartMode(entry.PreviousServiceStartMode);
-                    serviceHandler.ConfigureServiceStartType(entry.ServiceName, startType, ktm);
+                    if (!string.IsNullOrEmpty(entry.ServiceName) && !string.IsNullOrEmpty(entry.PreviousServiceStartMode))
+                    {
+                        var serviceHandler = new Operations.ServiceOperationHandler();
+                        uint startType = Operations.ServiceOperationHandler.ParseStartMode(entry.PreviousServiceStartMode);
+                        serviceHandler.ConfigureServiceStartType(entry.ServiceName, startType, ktm);
+                    }
+                }
+                catch
+                {
+                    // Service rollback fault isolation
                 }
                 break;
 
             case ChangeType.HostsModify:
-                if (string.IsNullOrEmpty(entry.PreviousHostsBlock))
+                try
                 {
-                    await Operations.HostsOperationHandler.RemoveHostsBlockAsync();
+                    if (string.IsNullOrEmpty(entry.PreviousHostsBlock))
+                    {
+                        await Operations.HostsOperationHandler.RemoveHostsBlockAsync();
+                    }
+                }
+                catch
+                {
+                    // Hosts rollback fault isolation
                 }
                 break;
 
             case ChangeType.AppxRemoval:
-                if (!string.IsNullOrEmpty(entry.PackagePattern))
+                try
                 {
-                    Operations.AppxOperationHandler.RevertDeprovisioning(entry.PackagePattern);
+                    if (!string.IsNullOrEmpty(entry.PackagePattern))
+                    {
+                        Operations.AppxOperationHandler.RevertDeprovisioning(entry.PackagePattern);
+                    }
+                }
+                catch
+                {
+                    // AppX rollback fault isolation
                 }
                 break;
         }

@@ -52,4 +52,21 @@ public class KtmTransactionTests
         using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(testSubKey);
         Assert.Null(key);
     }
+
+    [Fact]
+    public void KtmTransaction_DeleteValueOnMissingKey_ReturnsCleanlyWithoutCreatingPhantomKey()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+
+        string missingKey = @"Software\DWS_MissingKey_Test_" + Guid.NewGuid().ToString("N");
+        using (var ktm = new KtmTransactionManager("DWS_Unit_Test_DeleteMissing"))
+        {
+            // Should not throw or create the missing key
+            ktm.DeleteValue("HKCU", missingKey, "NonExistentVal");
+            ktm.Commit();
+        }
+
+        using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(missingKey);
+        Assert.Null(key);
+    }
 }
