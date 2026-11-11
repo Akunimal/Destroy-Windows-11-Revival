@@ -203,6 +203,10 @@ public class TransactionJournal
                     else
                     {
                         KtmTransactionManager.DeleteValueDirect(entry.Hive!, entry.KeyPath!, entry.ValueName!);
+                        if (!entry.PreviousKeyExisted && !string.IsNullOrEmpty(entry.KeyPath))
+                        {
+                            KtmTransactionManager.DeleteKeyIfEmptyDirect(entry.Hive!, entry.KeyPath!);
+                        }
                     }
                 }
                 catch (Win32Exception ex) when (ex.NativeErrorCode == 5)
@@ -219,6 +223,10 @@ public class TransactionJournal
                             else
                             {
                                 KtmTransactionManager.DeleteValueDirect(entry.Hive!, entry.KeyPath!, entry.ValueName!);
+                                if (!entry.PreviousKeyExisted && !string.IsNullOrEmpty(entry.KeyPath))
+                                {
+                                    KtmTransactionManager.DeleteKeyIfEmptyDirect(entry.Hive!, entry.KeyPath!);
+                                }
                             }
                         });
                     }

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Win32;
 using Microsoft.Win32.SafeHandles;
 
 namespace DWS.Core.KTM;
@@ -132,6 +133,13 @@ public sealed partial class KtmTransactionManager : IDisposable
     private static partial int RegDeleteValueW(
         SafeRegistryHandle hKey,
         string lpValueName);
+
+    [LibraryImport("advapi32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int RegDeleteKeyExW(
+        IntPtr hKey,
+        string lpSubKey,
+        uint samDesired,
+        uint reserved);
 
     public void SetDword(IntPtr hRootKey, string subKeyPath, string valueName, int data)
     {
@@ -352,6 +360,32 @@ public sealed partial class KtmTransactionManager : IDisposable
             {
                 throw new Win32Exception(delErr, $"Failed to delete direct value '{valueName}' in '{subKeyPath}' (Win32 Error {delErr}).");
             }
+        }
+    }
+
+    public static void DeleteKeyIfEmptyDirect(string hive, string subKeyPath)
+    {
+        try
+        {
+            var registryHive = string.Equals(hive, "HKCU", StringComparison.OrdinalIgnoreCase)
+                ? RegistryHive.CurrentUser
+                : RegistryHive.LocalMachine;
+
+            using var baseKey = RegistryKey.OpenBaseKey(registryHive, RegistryView.Registry64);
+            using (var subKey = baseKey.OpenSubKey(subKeyPath, false))
+            {
+                if (subKey == null || subKey.SubKeyCount > 0 || subKey.ValueCount > 0)
+                {
+                    return;
+                }
+            }
+
+            IntPtr hRoot = ResolveHive(hive);
+            RegDeleteKeyExW(hRoot, subKeyPath, KEY_WOW64_64KEY, 0);
+        }
+        catch
+        {
+            // Best-effort cleanup for empty keys
         }
     }
 

@@ -118,7 +118,7 @@ public sealed class EnterprisePipelineCoordinator
                                 string desiredVal = op.Value ?? "0";
 
                                 // Pre-inspection of current value
-                                var (exists, currentVal) = ReadRegistryCurrentValue(hive, path, name);
+                                var (keyExists, exists, currentVal) = ReadRegistryCurrentState(hive, path, name);
                                 string action = !exists ? "CREATE" : (currentVal == desiredVal ? "MATCH" : "CHANGE");
 
                                 var auditItem = new AuditChangeItem
@@ -258,6 +258,7 @@ public sealed class EnterprisePipelineCoordinator
                                             NewValue = desiredVal,
                                             PreviousValue = currentVal,
                                             PreviousValueExisted = exists,
+                                            PreviousKeyExisted = keyExists,
                                             Status = TransactionStatus.Applied
                                         });
 
@@ -608,25 +609,26 @@ public sealed class EnterprisePipelineCoordinator
         return _journal.RevertTransactionAsync(transactionId);
     }
 
-    private static (bool Exists, string? Value) ReadRegistryCurrentValue(string hive, string path, string name)
+    private static (bool KeyExists, bool ValueExists, string? Value) ReadRegistryCurrentState(string hive, string path, string name)
     {
         try
         {
-            var baseKey = string.Equals(hive, "HKCU", StringComparison.OrdinalIgnoreCase)
-                ? Registry.CurrentUser
-                : Registry.LocalMachine;
+            var registryHive = string.Equals(hive, "HKCU", StringComparison.OrdinalIgnoreCase)
+                ? RegistryHive.CurrentUser
+                : RegistryHive.LocalMachine;
 
+            using var baseKey = RegistryKey.OpenBaseKey(registryHive, RegistryView.Registry64);
             using var subKey = baseKey.OpenSubKey(path, false);
-            if (subKey == null) return (false, null);
+            if (subKey == null) return (false, false, null);
 
             var val = subKey.GetValue(name);
-            if (val == null) return (false, null);
+            if (val == null) return (true, false, null);
 
-            return (true, val.ToString());
+            return (true, true, val.ToString());
         }
         catch
         {
-            return (false, null);
+            return (false, false, null);
         }
     }
 }

@@ -16,6 +16,7 @@ public class TransactionEntry
     public string? NewValue { get; set; }
     public string? PreviousValue { get; set; }
     public bool PreviousValueExisted { get; set; }
+    public bool PreviousKeyExisted { get; set; } = true;
 
     // Servicios
     public string? ServiceName { get; set; }

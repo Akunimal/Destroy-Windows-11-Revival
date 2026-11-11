@@ -7,6 +7,7 @@
         xmlns:logging="using:DWS.Core.Logging"
         mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
         x:Class="DWS.GUI.Views.MainWindow"
+        x:Name="RootWindow"
         x:DataType="vm:MainViewModel"
         Title="DWS 11 Enterprise"
         Width="1200" Height="800"
@@ -241,8 +242,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="x:String">
                   <Button Content="{Binding}"
-                          Command="{Binding $parent[TabControl].((vm:MainViewModel)DataContext).RevertByCategoryCommand}"
-                          CommandParameter="{Binding}"/>
+                          Click="OnRevertCategoryClick"/>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>

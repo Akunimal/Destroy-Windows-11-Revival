@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using DWS.GUI.ViewModels;
 
 namespace DWS.GUI.Views;
@@ -10,6 +11,14 @@ public partial class MainWindow : Window
         Program.Log("MainWindow constructor started.");
         InitializeComponent();
         Program.Log("MainWindow constructor completed.");
+    }
+
+    private void OnRevertCategoryClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Content: string category } && DataContext is MainViewModel vm)
+        {
+            vm.RevertByCategoryCommand.Execute(category);
+        }
     }
 
     protected override void OnDataContextChanged(EventArgs e)
