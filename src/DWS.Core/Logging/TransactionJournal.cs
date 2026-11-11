@@ -22,7 +22,7 @@ public class TransactionJournal
 
         try
         {
-            Directory.CreateDirectory(_journalDirectory);
+            Security.SecurePathGuard.EnsureSecureDirectory(_journalDirectory);
         }
         catch (Exception ex)
         {

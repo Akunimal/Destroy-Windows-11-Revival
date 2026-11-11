@@ -31,7 +31,8 @@ public class DashboardClient : IDisposable
     }
 
     // Bounded wait: ConnectAsync without a timeout blocks indefinitely when the Worker pipe does not exist.
-    private const int PipeConnectTimeoutMs = 2000;
+    // 4000ms ensures enough buffer during cold start single-file extraction and Defender analysis.
+    private const int PipeConnectTimeoutMs = 4000;
 
     private static HttpClient CreatePipeHttpClient()
     {
